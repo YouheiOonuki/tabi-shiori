@@ -74,6 +74,32 @@
   }
 
   // =========================================================
+  // 折りたたみの状態と上端の固定バー（SCREEN.md 1.2。部品は screen.js）
+  // =========================================================
+  var S = window.YorozuScreen;
+  var PRINT_ITEMS = [['packing', '持ち物'], ['stays', '宿'], ['contacts', '連絡先'], ['budget', '予算・割り勘'], ['notes', 'メモ'], ['free', '自由ページ']];
+  var MODE_LABELS = { a4: 'A4 縦', booklet: 'A5 冊子' };
+  // 固定バーは、読み込んだあと最初にスクロールか入力をしてから出す（読み込み時に出さない）
+  var engaged = false, bar = null;
+  function updateSummaries() {
+    var t = cur();
+    var on = PRINT_ITEMS.filter(function (x) { return t.print[x[0]]; });
+    var done = t.packing.filter(function (x) { return x.done; }).length;
+    var total = C.settle(t.members.length, t.budget).total;
+    S.detailsSummary({
+      'sec-cover': (t.title || 'タイトルなし') + (t.start ? '・' + C.dateJa(t.start) : '') + (t.members.length ? '・' + t.members.length + ' 人' : ''),
+      'opt-items': on.length === PRINT_ITEMS.length ? 'すべて' : on.length ? on.map(function (x) { return x[1]; }).join('、') : 'なし',
+      'opt-howto': mode === 'booklet' ? 'A4 横・両面印刷（短辺とじ）' : 'A4 縦',
+      'sec-packing': t.packing.length ? t.packing.length + ' 件（用意した ' + done + '）' : 'なし',
+      'sec-stays': t.stays.length || t.contacts.length ? '宿 ' + t.stays.length + '・連絡先 ' + t.contacts.length : 'なし',
+      'sec-budget': t.budget.length ? '費用 ' + t.budget.length + ' 件・合計 ' + yen(total) : 'なし',
+      'sec-notes': t.notes.trim() ? num(t.notes.length) + ' 字' : 'なし',
+      'sec-free': t.freePages.length ? t.freePages.length + ' ページ' : 'なし',
+    });
+    if (bar) bar.set(engaged ? (t.title || 'タイトルなし') + '・' + MODE_LABELS[mode] : '');
+  }
+
+  // =========================================================
   // 描画
   // =========================================================
   function renderAll() {
@@ -97,6 +123,7 @@
     document.querySelectorAll('input[name="mode"]').forEach(function (r) { r.checked = r.value === mode; });
     renderPrintHelp();
     if (!$('preview').hidden) renderPreview();
+    updateSummaries();
   }
 
   function renderTrips() {
@@ -122,6 +149,7 @@
     var t = cur(), img = $('img-thumb');
     if (t.image) { img.src = t.image; img.hidden = false; } else { img.removeAttribute('src'); img.hidden = true; }
     $('img-del').hidden = !t.image;
+    updateSummaries();
   }
 
   function renderNights() {
@@ -224,8 +252,7 @@
         '<input type="text" id="pk' + i + '" data-p="packing.' + i + '.name" maxlength="40" value="' + esc(x.name) + '">' +
         '<button type="button" class="mini danger" data-act="pack-del" data-i="' + i + '" aria-label="' + esc(x.name) + ' を削除">×</button></li>';
     }).join('');
-    var done = t.packing.filter(function (x) { return x.done; }).length;
-    $('h-packing').textContent = '持ち物チェックリスト' + (t.packing.length ? '（' + done + ' / ' + t.packing.length + '）' : '');
+    updateSummaries();
   }
 
   function renderStays() {
@@ -282,7 +309,7 @@
         '</div>' +
       '</div>';
     }).join('');
-    $('h-free').textContent = '自由ページ' + (n ? '（' + n + ' / ' + C.LIMITS.freePages + '）' : '');
+    updateSummaries();
     $('free-add').disabled = n >= C.LIMITS.freePages;
     growAll($('free-pages'));
   }
@@ -367,10 +394,6 @@
     if (/^budget\./.test(p)) updateBudgetSummary();
     var fm = /^freePages\.(\d+)\.body$/.exec(p);
     if (fm && $('fp' + fm[1] + 'c')) $('fp' + fm[1] + 'c').textContent = freeCount(Number(fm[1]));
-    if (/^packing\./.test(p)) {
-      var done = t.packing.filter(function (x) { return x.done; }).length;
-      $('h-packing').textContent = '持ち物チェックリスト（' + done + ' / ' + t.packing.length + '）';
-    }
     if (p === 'title' || p === 'start') renderTrips();
     if (p === 'start' || p === 'end') {
       renderNights();
@@ -406,10 +429,23 @@
     }
   });
 
+  // 入力・切り替え・ボタンのたびに、折りたたみの状態と固定バーを直す（個別の処理のあとに走るよう、ここで登録する）
+  ['input', 'change', 'click', 'keyup'].forEach(function (ev) {
+    main.addEventListener(ev, function () { engaged = true; updateSummaries(); });
+  });
+  addEventListener('scroll', function onScroll() { engaged = true; updateSummaries(); removeEventListener('scroll', onScroll); }, { passive: true });
+
   function autoGrow(el) { if (!el.value) { el.style.height = ''; return; } el.style.height = 'auto'; el.style.height = Math.min(el.scrollHeight + 2, 400) + 'px'; }
   function growAll(box) { box.querySelectorAll('textarea').forEach(autoGrow); }
 
-  function focusLater(id) { setTimeout(function () { var el = $(id); if (el) el.focus(); }, 0); }
+  // 閉じた <details> の中の欄なら、開いてからフォーカスする（「新しく作る」のタイトルなど）
+  function focusLater(id) {
+    setTimeout(function () {
+      var el = $(id); if (!el) return;
+      var d = el.closest('details'); if (d && !d.open) d.open = true;
+      el.focus();
+    }, 0);
+  }
 
   main.addEventListener('click', function (e) {
     var b = e.target.closest('[data-act]');
@@ -753,6 +789,7 @@
   }
 
   $('print').addEventListener('click', function () { preparePrint(); window.print(); });
+  bar = S.fixedBar({ bar: 'fixbar', watch: 'print', text: 'fixbar-text', onClick: function () { $('print').click(); } });
   // ブラウザのメニューから印刷したときも、いまの内容で作り直す
   addEventListener('beforeprint', function () { preparePrint(); });
 

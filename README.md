@@ -46,6 +46,7 @@ yorozu-craft のツールの1つです（共通ルールは [youheioonuki.github
 | `calc.js` | 正規化・日付・移動時間・割り勘と精算・easy-split 形式・共有リンクの符号化・ページ分け・面付け・バックアップ（画面から切り離した純粋関数） |
 | `presets.js` | 定番の持ち物、表紙の絵柄（SVG） |
 | `main.js` | 画面の制御・保存・印刷用のページ組み・共有リンク・書き出しと読み込み |
+| `screen.js` | 画面の部品（上端の固定バー・折りたたみの状態表示）。yorozu-template と同じもの（yorozu-plans の docs/SCREEN.md 1.2） |
 | `style.css` | 見た目（和紙風の配色、ダークモード対応）と印刷（`@page`・紙のレイアウト） |
 | `404.html` | ツール配下の存在しない URL で出るページ（サイト共通のもの） |
 | `favicon.svg` / `apple-touch-icon.png` / `og-image.png` | アイコン / ホーム画面用アイコン / SNS 共有用画像（1200×630） |
