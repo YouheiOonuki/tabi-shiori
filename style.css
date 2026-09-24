@@ -1,5 +1,5 @@
 /* ===========================
-   __TITLE__ — yorozu-craft 共通の和紙風の配色
+   旅のしおりメーカー — yorozu-craft 共通の和紙風の配色
    色はトークン（--bg / --card / --text / --muted / --accent / --border）だけを使う。
    ダークモードは端末の設定に自動で合わせる（prefers-color-scheme。手動切替は付けない）
    =========================== */
@@ -127,4 +127,192 @@ a { color: var(--accent); }
 
 @media (max-width: 480px) {
   .app-header h1 { font-size: 1.2rem; }
+}
+
+/* ===========================
+   旅のしおりメーカー（ツール固有）
+   =========================== */
+:root { --warn: #a33a1f; --warn-bg: #fbe9e2; --ok: #2f6b3a; }
+@media (prefers-color-scheme: dark) {
+  :root { --warn: #f0a488; --warn-bg: #3a221b; --ok: #8fd19e; }
+}
+
+/* JS が画面を組み立てるまで本体を隠す（index.html の head のスクリプト） */
+.js-loading .app-main { visibility: hidden; }
+
+.center { text-align: center; }
+.visually-hidden {
+  position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+.badge {
+  font-size: 0.8rem; color: var(--muted); background: var(--accent-soft);
+  border: 1px solid var(--border); border-radius: 6px; padding: 0.45rem 0.7rem; margin-bottom: 1rem;
+}
+.notice {
+  background: var(--accent-soft); border: 1px solid var(--accent); border-radius: 8px;
+  padding: 0.8rem 1rem; margin-bottom: 1rem; font-size: 0.9rem;
+}
+.notice p + .btn-row { margin-top: 0.6rem; }
+.warn-box { background: var(--warn-bg); color: var(--warn); border-radius: 6px; padding: 0.5rem 0.7rem; font-size: 0.85rem; margin: 0.4rem 0 0.6rem; }
+
+/* 入力欄（テンプレートの .field に、時刻・日付・電話・複数行を足す） */
+.field input[type="time"], .field input[type="date"], .field input[type="tel"], .field textarea, .card textarea,
+.card input[type="text"], .card input[type="tel"], .card input[type="number"], .card input[type="time"], .card select {
+  width: 100%; padding: 0.45rem 0.5rem; font-size: 1rem; font-family: inherit;
+  border: 1px solid var(--border); border-radius: 6px; background: var(--card); color: var(--text);
+  min-width: 0;
+}
+.field input[type="text"], .field select, .field input[type="number"] { max-width: none; }
+.card textarea { resize: vertical; line-height: 1.5; min-height: 2.4rem; }
+.field .label { display: block; font-weight: 600; font-size: 0.95rem; margin-bottom: 0.25rem; }
+fieldset.field { border: none; }
+fieldset.field legend { font-weight: 600; font-size: 0.95rem; margin-bottom: 0.3rem; }
+label.inline { display: flex; align-items: center; gap: 0.4rem; font-size: 0.92rem; margin: 0.15rem 0; }
+label.inline input { width: 1.1rem; height: 1.1rem; flex: none; accent-color: var(--accent); }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 0.8rem; }
+.inline-row { display: flex; gap: 0.5rem; align-items: center; }
+.inline-row > input, .inline-row > select { flex: 1; }
+.btn-row { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0.6rem 0; }
+.btn { text-decoration: none; min-height: 44px; }
+.btn-sub { background: var(--accent-soft); color: var(--accent); border: 1px solid var(--accent); }
+.btn:disabled { opacity: 0.5; cursor: default; }
+.mini {
+  font-size: 0.8rem; padding: 0.3rem 0.6rem; min-height: 36px; min-width: 36px; border-radius: 6px; cursor: pointer;
+  border: 1px solid var(--border); background: var(--card); color: var(--text); font-family: inherit;
+}
+.mini:disabled { opacity: 0.35; cursor: default; }
+.mini.danger { color: var(--warn); }
+.mini:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.sub-h { font-size: 0.95rem; margin: 0.8rem 0 0.4rem; }
+.total-line { font-size: 0.88rem; font-weight: 600; color: var(--accent); margin-top: 0.5rem; }
+.hint { font-size: 0.8rem; color: var(--muted); margin-bottom: 0.6rem; }
+
+/* 表紙の絵柄 */
+.cover-pick { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; }
+.cover-opt { position: relative; display: block; border: 2px solid var(--border); border-radius: 8px; padding: 0.3rem; cursor: pointer; text-align: center; background: #faf6ee; }
+.cover-opt input { position: absolute; opacity: 0; }
+.cover-opt:has(input:checked) { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent); }
+.cover-opt:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
+.cover-art { display: block; aspect-ratio: 12 / 7; }
+.cover-art svg { width: 100%; height: 100%; display: block; }
+.cover-none { display: flex; height: 100%; align-items: center; justify-content: center; color: #6e604f; font-size: 0.8rem; }
+.cover-name { display: block; font-size: 0.8rem; color: #3a3025; }
+.img-thumb { display: block; width: 160px; height: auto; max-height: 120px; object-fit: cover; border-radius: 6px; border: 1px solid var(--border); margin-top: 0.4rem; }
+
+/* 行程 */
+.day { border: 1px solid var(--border); border-radius: 8px; padding: 0.7rem; margin-bottom: 0.8rem; background: var(--bg); }
+.day-head { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; margin-bottom: 0.5rem; }
+.day-head h3 { font-size: 1rem; color: var(--accent); }
+.items { list-style: none; }
+.item { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 0.55rem; margin-bottom: 0.5rem; }
+.item-row { display: flex; gap: 0.4rem; align-items: center; margin-bottom: 0.4rem; }
+.item-row input[type="time"] { width: 7.4rem; flex: none; }
+.item-row input[type="text"] { flex: 1; }
+.map-link { font-size: 0.8rem; flex: none; padding: 0.4rem 0.2rem; }
+.move-row { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; margin-top: 0.4rem; font-size: 0.88rem; }
+.move-row select { width: auto; flex: 0 1 7.5rem; }
+.move-row input.num-min { width: 5.2rem; flex: none; }
+.move-label { color: var(--muted); font-size: 0.82rem; }
+.arrive { color: var(--muted); font-size: 0.82rem; }
+.warn { color: var(--warn); background: var(--warn-bg); border-radius: 6px; padding: 0.3rem 0.5rem; font-size: 0.82rem; margin-top: 0.4rem; }
+.item-tools { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.45rem; }
+
+/* 持ち物・宿・予算 */
+.check-list { list-style: none; margin-bottom: 0.6rem; }
+.check-list li { display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.35rem; }
+.check-list li input[type="text"] { flex: 1; }
+.check-list label.inline { margin: 0; }
+.check-list input[type="checkbox"] { width: 1.3rem; height: 1.3rem; }
+.check-grid { display: grid; grid-template-columns: 1fr; gap: 0.1rem; }
+.entry { border: 1px solid var(--border); border-radius: 8px; padding: 0.6rem; margin-bottom: 0.6rem; background: var(--bg); }
+.entry .field { margin-bottom: 0.5rem; }
+.budget-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0 0.6rem; align-items: end; }
+.budget-row .field:first-child { grid-column: 1 / -1; }
+.budget-row .mini { justify-self: start; grid-column: 1 / -1; }
+.summary { margin-top: 0.8rem; font-size: 0.92rem; }
+.summary p + p, .summary p + ul { margin-top: 0.3rem; }
+.sum-h { font-weight: 600; }
+.transfers { padding-left: 1.2rem; }
+.share-url { width: 100%; font-size: 0.8rem; margin-top: 0.3rem; }
+
+/* 印刷の見本 */
+.preview { margin-top: 0.8rem; }
+.pv { margin: 0.6rem 0 1rem; }
+.pv figcaption { font-size: 0.8rem; color: var(--muted); margin-top: 0.3rem; }
+.pv-sheet { position: relative; overflow: hidden; box-shadow: 0 1px 6px var(--shadow); }
+.pv-sheet .sheet { transform-origin: 0 0; position: absolute; top: 0; left: 0; }
+
+/* ===========================
+   印刷物（紙）: 端末のダークモードに関係なく白い紙に黒い字
+   =========================== */
+#print-root, #measure { display: none; }
+#measure { display: block; position: absolute; left: -10000px; top: 0; visibility: hidden; }
+.paper { color: #222; font-family: "Noto Sans JP", "Noto Sans CJK JP", "Hiragino Sans", "Hiragino Kaku Gothic ProN", Meiryo, sans-serif; line-height: 1.5; }
+.paper a { color: inherit; text-decoration: none; }
+.sheet { background: #fff; overflow: hidden; position: relative; }
+.sheet-a4 { width: 210mm; height: 297mm; }
+.sheet-land { width: 297mm; height: 210mm; display: flex; }
+.paper .pg { position: relative; background: #fff; overflow: hidden; }
+.size-a4 .pg { width: 210mm; height: 297mm; padding: 16mm 16mm 18mm; font-size: 11pt; }
+.size-a5 .pg { width: 148.5mm; height: 210mm; padding: 11mm 11mm 13mm; font-size: 8.8pt; }
+.sheet-land .pg + .pg { border-left: 0.2mm dashed #ddd; }
+.paper .pg-body { height: 100%; overflow: hidden; }
+.paper .blk { display: flow-root; }
+.paper .pg-no { position: absolute; bottom: 6mm; left: 0; right: 0; text-align: center; font-size: 8pt; color: #888; }
+.paper .pg-credit { position: absolute; bottom: 6mm; right: 10mm; font-size: 6.5pt; color: #999; }
+
+.paper .p-cover { height: 100%; display: flex; flex-direction: column; align-items: center; text-align: center; padding-top: 8%; }
+.paper .p-cover-label { font-size: 0.9em; letter-spacing: 0.4em; color: #8b4513; border-bottom: 0.3mm solid #8b4513; padding-bottom: 1mm; }
+.paper .p-title { font-size: 2.3em; line-height: 1.3; margin: 5mm 0 2mm; color: #3a3025; word-break: break-word; }
+.paper .p-subtitle { font-size: 1.1em; color: #6e604f; }
+.paper .p-art { width: 78%; margin: 7mm 0; }
+.paper .p-art svg { width: 100%; height: auto; display: block; }
+.paper .p-photo { width: 100%; max-height: 90mm; object-fit: cover; border-radius: 2mm; display: block; }
+.size-a5 .p-photo { max-height: 62mm; }
+.paper .p-dates { font-size: 1.15em; font-weight: 600; color: #3a3025; margin-top: auto; }
+.paper .p-dates span { font-size: 0.85em; font-weight: 400; color: #6e604f; }
+.paper .p-members { margin: 4mm 0 10mm; font-size: 1em; color: #3a3025; }
+.paper .p-members span { display: block; font-size: 0.8em; color: #8b4513; letter-spacing: 0.2em; }
+
+.paper .p-h { font-size: 1.25em; color: #8b4513; border-bottom: 0.4mm solid #8b4513; padding: 0 0 1mm; margin: 0 0 2.5mm; }
+.paper .blk + .blk .p-h { margin-top: 4mm; }
+.paper .p-item { display: flex; gap: 3mm; padding: 1.2mm 0; }
+.paper .p-time { flex: none; width: 3.6em; font-weight: 700; color: #3a3025; font-variant-numeric: tabular-nums; }
+.paper .p-body { flex: 1; min-width: 0; }
+.paper .p-place { font-weight: 700; font-size: 1.05em; word-break: break-word; }
+.paper .p-memo { color: #555; font-size: 0.92em; word-break: break-word; }
+.paper .p-move { margin-left: 3.6em; padding: 0.6mm 0 0.6mm 3mm; border-left: 0.6mm dotted #b9ab96; color: #6e604f; font-size: 0.9em; }
+.paper .p-arr { color: #888; }
+.paper .p-total { text-align: right; font-size: 0.9em; color: #8b4513; padding-top: 1mm; }
+.paper .p-empty { color: #999; }
+.paper .p-pack { display: grid; grid-template-columns: 1fr 1fr; gap: 3mm; padding: 0.9mm 0; }
+.paper .p-box { display: inline-block; width: 1em; height: 1em; border: 0.3mm solid #555; margin-right: 1.5mm; vertical-align: -0.15em; text-align: center; line-height: 1em; font-size: 0.95em; }
+.paper .p-card { border: 0.3mm solid #cfc0a0; border-radius: 1.5mm; padding: 2mm 3mm; margin-bottom: 2mm; }
+.paper .p-strong { font-weight: 700; }
+.paper .p-sub { color: #6e604f; font-weight: 400; font-size: 0.9em; }
+.paper .p-row { display: flex; justify-content: space-between; gap: 3mm; padding: 1mm 0; border-bottom: 0.2mm solid #e6dfd0; }
+.paper .p-num { flex: none; font-variant-numeric: tabular-nums; }
+.paper .p-gap { margin-top: 2mm; }
+.paper .p-note { padding: 1mm 0; word-break: break-word; }
+
+@media (max-width: 480px) {
+  .cover-pick { grid-template-columns: repeat(3, 1fr); }
+}
+
+/* ===========================
+   印刷: しおりだけを出す。画面の本体・ヘッダー・フッター・広告（自動広告・アンカー広告を含む）は出さない
+   =========================== */
+@media print {
+  html, body { background: #fff !important; margin: 0; padding: 0; }
+  /* #measure は印刷の直前（beforeprint）のページ組みで高さを測るのに使う（中身は測ったあと空にする） */
+  body.tool-page > :not(#print-root):not(#measure) { display: none !important; }
+  /* 使い方ページを印刷するときも、広告は出さない */
+  ins.adsbygoogle, .google-auto-placed, iframe[id^="aswift"], iframe[id^="google_ads"] { display: none !important; }
+  #print-root { display: block !important; }
+  #print-root ins, #print-root iframe, #print-root .adsbygoogle, #print-root .google-auto-placed { display: none !important; }
+  .sheet { break-after: page; page-break-after: always; }
+  .sheet:last-child { break-after: auto; page-break-after: auto; }
+  .sheet-land .pg + .pg { border-left: none; }
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }

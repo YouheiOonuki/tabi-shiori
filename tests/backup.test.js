@@ -4,9 +4,9 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const { backupFileName, buildBackup, parseBackup } = require('../calc.js');
 
-const TOOL = '__REPO__';
-const DATA = { draft: { amount: '1234' } };
-const REQUIRED = ['draft'];
+const TOOL = 'tabi-shiori';
+const DATA = { trips: { v: 1, active: 'abc', trips: [{ id: 'abc', title: '京都' }] } };
+const REQUIRED = ['trips'];
 
 test('backupFileName: <ツール名>-backup-YYYYMMDD.json（端末の日付）', () => {
   assert.equal(backupFileName(TOOL, new Date(2026, 8, 24, 23, 59)), TOOL + '-backup-20260924.json');

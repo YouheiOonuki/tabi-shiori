@@ -1,83 +1,58 @@
-# __TITLE__
+# 旅のしおりメーカー
 
-公開 URL: **https://yorozu-craft.com/__REPO__/**
+公開 URL: **https://yorozu-craft.com/tabi-shiori/**
 
-__DESCRIPTION__
+登録不要・無料で印刷できる旅のしおり作成ツール。行程に移動時間、持ち物チェックリスト、宿・連絡先、予算と割り勘まで。A4 と A5 冊子で印刷・PDF 保存。
 yorozu-craft のツールの1つです（共通ルールは [youheioonuki.github.io の README](https://github.com/YouheiOonuki/youheioonuki.github.io) を参照）。
-
-<!-- TEMPLATE-BEGIN -->
-## テンプレートの使い方（`tools/init.mjs` を実行すると、この節は消えます）
-
-yorozu-craft の新しいツールの雛形です。サイト共通の決まり（youheioonuki.github.io の README「ツールを追加するとき」）のうち、ファイルで守れるものは最初から入れてあります。
-
-1. GitHub で「Use this template」→ リポジトリ名は短いローマ字＋種類（例: `loan-sim`）。URL になる
-2. クローンして、初期化スクリプトを 1 回だけ実行する（Node 20 以上）
-
-   ```sh
-   node tools/init.mjs loan-sim "住宅ローン 返済シミュレーター" "毎月の返済額と総返済額をすぐ計算。" --pwa
-   ```
-
-   - `__REPO__`・`__TITLE__`・`__DESCRIPTION__`・日付を置き換える
-   - `--pwa` を付けないと、オフライン対応の部分（`sw.js`・`manifest.webmanifest`・`PWA-BEGIN`〜`PWA-END`）を消す
-   - README のこの節と `tools/init.mjs` 自身を消す
-3. `node --test tests/*.test.js` が通ることを確かめてからコミット
-4. 残りは youheioonuki.github.io の README「ツールを追加するとき」の手順どおり（Pages の公開と Enforce HTTPS、トップの一覧・robots.txt・URL 表への追加など）
-
-最初から入っているもの:
-
-| 決まり | 入っている場所 |
-|-------|---------------|
-| canonical・OGP・AdSense・Cloudflare ビーコン | `index.html`・`guide.html` の `<head>` と `</body>` 直前 |
-| 共通ページへの相対リンク（`../about.html`・`../privacy-policy.html`） | 各ページのフッター |
-| ツール配下の 404 | `404.html`（youheioonuki.github.io のものと同じ） |
-| 保存キーの接頭辞 `<リポジトリ名>_`・try/catch | `main.js` の `store` |
-| 共有 URL は `#s=` | `main.js` の `toShareHash` / `fromShareHash` |
-| 保存内容を JSON ファイルに書き出し・読み込み（`{tool, version, exportedAt, data}`。読み込み時は `tool` を確かめ、正規化してから確認のうえ上書き） | `calc.js` の `backupFileName` / `buildBackup` / `parseBackup`、`main.js` の書き出し・読み込み、`index.html` のボタン、`tests/backup.test.js` |
-| SW のキャッシュ名の接頭辞・自分のパスだけ扱う・`./sw.js` で登録 | `sw.js`・`main.js` |
-| manifest の `id` は `/<リポジトリ名>/` | `manifest.webmanifest` |
-| 使い方ページは `guide.html`（注意・データの扱い・根拠と確認日・更新履歴の節つき） | `guide.html` |
-| 要望・不具合の報告フォーム（全ツール共通の Google フォーム。リポジトリ名が入った状態で開く） | `guide.html` の「ご利用上の注意・データの扱い」 |
-| 時点のある値は値・出典・確認日をセットで 1 か所に | `constants.js`（テストで出典と確認日の書き忘れを検出） |
-| 計算は画面から切り離した純粋関数＋テスト | `calc.js`・`tests/`・`.github/workflows/test.yml` |
-| 端末のフォント・ダークモード | `style.css` |
-| MIT ライセンス | `LICENSE` |
-
-差し替えが必要なもの: `favicon.svg`・`apple-touch-icon.png`（180×180）・`og-image.png`（1200×630）は仮の絵なので、ツールに合わせて作り直す。
-<!-- TEMPLATE-END -->
 
 ## 機能
 
-- （できることを箇条書きで）
-- 入力内容はこの端末のブラウザにだけ保存し、外部には送信しない
+- 表紙（タイトル・サブタイトル・日程と「◯泊◯日」・メンバー・絵柄 6 種。写真は任意で、端末の中で縮小してブラウザにだけ保存）
+- 行程（日ごとに 時刻・場所・メモ、**次の場所への移動手段と移動時間**）。到着の目安、次の予定に間に合わないときの注意、日ごと・全体の移動時間の合計。場所から Google マップの検索リンク（リンクだけ・埋め込みなし・API なし）
+- 持ち物チェックリスト（定番 8 種から重複なしで追加）、宿、連絡先、メモ
+- 予算・割り勘（合計・1 人あたり・立て替えの精算「誰が誰にいくら」）。傾斜をつけたいときは easy-split の共有形式（`#s=`）でメンバーと費用を渡して開く
+- 印刷: **A4 縦**と **A5 冊子**（A4 横に 2 ページずつ中綴じの順に面付け）。長い日は自動でページを分ける（見出しと最初の行は離さない）。印刷する項目の選択、最後のページの小さな「yorozu-craft.com/tabi-shiori で作成」（外せる）。印刷の見本（紙ごとの面付け）。**印刷に広告は出さない**（`@media print` で本文以外を隠す）
+- しおりを複数（30 件まで）持てる。新規・複製・削除
+- 自動保存（`tabi-shiori_trips`、用紙の選択は `tabi-shiori_mode`）
+- ファイルへの書き出し・読み込み（決定 D31。`{ tool: 'tabi-shiori', version: 1, exportedAt, data: { trips } }`、`tabi-shiori-backup-YYYYMMDD.json`、1MB まで。読み込みは `normalizeStore` を通して確認のうえ置き換え）
+- 共有リンク `#s=`（しおりを短い配列に詰めて deflate-raw ＋ base64url。画像は入れない。宿の住所・電話と連絡先はチェックしたときだけ入れる。8,000 文字を超えたらファイルを勧める）。開いた人には「共有されたしおり」と出し、保存するまで自動保存しない。「自分のしおりを作る」（`#new`）で白紙のしおりを開く
 
-## 計算の仕様・根拠
+## 仕様
 
-（計算式、使っている値と出典。値は `constants.js` にまとめ、画面の「根拠と確認日」にも出す）
+- 移動: `items[i].move / min` は「この場所から次の場所へ」。到着の目安 = 時刻 + 分。次の予定の時刻より遅ければ注意（次に時刻が無ければ判定しない）
+- 精算: 立て替えた人のいる費用の合計 ÷ 人数（1 円未満切り捨て、余りは上のメンバーから 1 円ずつ多く負担）。差の大きい人どうしから組むので送金は「人数 − 1」回以下。立て替えた人が未設定の費用は合計にだけ入れる
+- 面付け（中綴じ）: n ページ（4 の倍数にそろえる）で、紙 k 枚目（0 始まり）の表 = [n−2k, 2k+1]、裏 = [2k+2, n−2k−1]（左・右）。両面・短辺とじで印刷して重ね、真ん中で折る
+- ページ分け: 印刷用の塊を画面外で実寸（mm）に描いて高さを測り、`Calc.paginate` で詰める
+- easy-split への受け渡し: easy-split の `main.js` の `decodeShare` と同じ `{ v:1, b:[[名前, 合計, 0, []]], p:[[名前, 1, null]], o:0, u:'auto' }` を base64url にして `../easy-split/#s=`。会計は 10 件まで（残りは「その他」）
+- 企画書は yorozu-plans（非公開）の `docs/09_旅のしおり.md`（競合の実測を含む）
 
 ## 保守
 
+時点のある外部の値は持たない（定番の持ち物と絵柄は `presets.js` の固定データ）。
+
 | 時期 | 確認すること | 直す場所 |
 |------|------------|---------|
-| （例: 毎年4月ごろ） | （例: 料率の改定） | `constants.js`、`guide.html` の最終確認日 |
+| easy-split の共有形式を変えたとき | `v:1` の形のまま読めるか | `calc.js` の `toEasySplit`、`tests/calc.test.js` |
+| 共有リンクの形を変えるとき | 古いリンク（先頭 `z`/`j`、版 1）を読めるようにしておく | `calc.js` の `packTrip` / `unpackTrip` |
 
-値や計算を直したら、`guide.html` の「更新履歴」に日付と内容を 1 行足す。
+直したら、`guide.html` の「更新履歴」に日付と内容を 1 行足す。
 
 ## ファイル
 
 | ファイル | 役割 |
 |---------|------|
-| `index.html` | ツール本体 |
-| `guide.html` | 使い方・根拠と確認日・よくある質問・ご利用上の注意・更新履歴 |
-| `calc.js` | 計算ロジック（画面から切り離した純粋関数） |
-| `constants.js` | 時点のある値（値・出典・確認日） |
-| `main.js` | 画面の制御・保存・共有リンク |
-| `style.css` | 見た目（和紙風の配色、ダークモード対応） |
-| `sw.js` / `manifest.webmanifest` | オフライン対応（使う場合のみ） |
+| `index.html` | しおりの作成画面（本体） |
+| `guide.html` | 使い方・移動時間・印刷と PDF のコツ（冊子の折り方・片面プリンター・コンビニ）・割り勘・共有・よくある質問・ご利用上の注意・更新履歴 |
+| `calc.js` | 正規化・日付・移動時間・割り勘と精算・easy-split 形式・共有リンクの符号化・ページ分け・面付け・バックアップ（画面から切り離した純粋関数） |
+| `presets.js` | 定番の持ち物、表紙の絵柄（SVG） |
+| `main.js` | 画面の制御・保存・印刷用のページ組み・共有リンク・書き出しと読み込み |
+| `style.css` | 見た目（和紙風の配色、ダークモード対応）と印刷（`@page`・紙のレイアウト） |
 | `404.html` | ツール配下の存在しない URL で出るページ（サイト共通のもの） |
 | `favicon.svg` / `apple-touch-icon.png` / `og-image.png` | アイコン / ホーム画面用アイコン / SNS 共有用画像（1200×630） |
 | `sitemap.xml` | サイトマップ（robots.txt はドメイン直下で管理） |
-| `tests/*.test.js` | テスト（`node --test tests/*.test.js`。`.github/workflows/test.yml` で push・PR のたびに自動実行） |
+| `tests/calc.test.js` | 計算・共有リンク・ページ分け・面付けのテスト（`node --test tests/*.test.js`。`.github/workflows/test.yml` で push・PR のたびに自動実行） |
+| `tests/backup.test.js` | 書き出し・読み込み（`buildBackup` / `parseBackup`）のテスト |
 
 ## ライセンス
 
-MIT License（`LICENSE`）。
+MIT License（`LICENSE`）。表紙の絵柄・アイコンはこのリポジトリで描いたもの。第三者のデータ・ライブラリは使っていない。
