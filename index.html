@@ -185,6 +185,14 @@
       <textarea id="f-notes" data-p="notes" rows="4" maxlength="3000" placeholder="例：雨の日の予定、集合の約束、おみやげリスト"></textarea>
     </section>
 
+    <!-- 6-2. 自由ページ（見出し＋本文。決定 D61） -->
+    <section class="card" id="sec-free" aria-labelledby="h-free">
+      <h2 id="h-free">自由ページ</h2>
+      <p class="hint">見出しと本文を、しおりの 1 ページとして印刷します。</p>
+      <div id="free-pages"></div>
+      <button type="button" id="free-add" class="btn btn-sub">ページを足す</button>
+    </section>
+
     <!-- 7. 印刷 -->
     <section class="card" id="sec-print" aria-labelledby="h-print">
       <h2 id="h-print">印刷・PDF</h2>
@@ -201,6 +209,7 @@
           <label class="inline"><input type="checkbox" data-p="print.contacts" data-type="bool"> 連絡先</label>
           <label class="inline"><input type="checkbox" data-p="print.budget" data-type="bool"> 予算・割り勘</label>
           <label class="inline"><input type="checkbox" data-p="print.notes" data-type="bool"> メモ</label>
+          <label class="inline"><input type="checkbox" data-p="print.free" data-type="bool"> 自由ページ</label>
           <label class="inline"><input type="checkbox" data-p="print.credit" data-type="bool"> 最後のページに「yorozu-craft.com/tabi-shiori/print/ で作成」と小さく入れる</label>
         </div>
       </fieldset>

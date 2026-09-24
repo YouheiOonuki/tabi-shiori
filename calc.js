@@ -14,7 +14,10 @@
   var LIMITS = {
     trips: 30, members: 30, days: 30, items: 40, packing: 150, stays: 10, contacts: 20, budget: 50,
     title: 60, sub: 80, name: 40, place: 60, memo: 300, addr: 120, tel: 30, notes: 3000, image: 400000,
+    freePages: 20, freeTitle: 40, freeBody: 2000,
   };
+  // 自由ページを入れる場所（行程の前・後ろ）
+  var FREE_PLACES = ['before', 'after'];
 
   // --- 小さな道具 ---
   function str(v, max) {
@@ -42,13 +45,14 @@
   function newId() { return Math.random().toString(36).slice(2, 10) || 'a'; }
 
   // --- 正規化（保存データ・ファイル・共有リンクの中身はそのまま信じない） ---
-  var PRINT_KEYS = ['credit', 'packing', 'stays', 'contacts', 'budget', 'notes'];
+  // 並びは共有リンクのビットの順。足すときは末尾に足す（古いリンクのビットがずれないように）
+  var PRINT_KEYS = ['credit', 'packing', 'stays', 'contacts', 'budget', 'notes', 'free'];
 
   function emptyTrip() {
     return {
       id: newId(), title: '', sub: '', start: '', end: '', members: [], cover: 'mountain', image: '',
-      days: [{ items: [] }], packing: [], stays: [], contacts: [], budget: [], notes: '',
-      print: { credit: true, packing: true, stays: true, contacts: true, budget: true, notes: true },
+      days: [{ items: [] }], packing: [], stays: [], contacts: [], budget: [], notes: '', freePages: [],
+      print: { credit: true, packing: true, stays: true, contacts: true, budget: true, notes: true, free: true },
     };
   }
 
@@ -100,8 +104,61 @@
         return { name: line(x.name, LIMITS.name), amount: intIn(x.amount, 0, 99999999), payer: intIn(x.payer, -1, LIMITS.members - 1) };
       }),
       notes: str(o.notes, LIMITS.notes),
+      // 自由ページ（見出し＋本文）。古い保存データには無いので、そのときは空
+      freePages: arr(o.freePages, LIMITS.freePages).map(function (x) {
+        x = obj(x);
+        return {
+          id: typeof x.id === 'string' && /^[a-z0-9]{1,16}$/.test(x.id) ? x.id : newId(),
+          title: line(x.title, LIMITS.freeTitle),
+          body: str(x.body, LIMITS.freeBody).replace(/\r\n?/g, '\n'),
+          place: FREE_PLACES.indexOf(x.place) >= 0 ? x.place : 'after',
+        };
+      }),
       print: p,
     };
+  }
+
+  /** 印刷する自由ページを、行程の前と後ろに分ける（並びは入力の順。見出しも本文も空のページと、印刷しない設定のときは除く） */
+  function freeOrder(trip) {
+    var out = { before: [], after: [] };
+    if (!trip.print || !trip.print.free) return out;
+    (trip.freePages || []).forEach(function (f) {
+      if (f.title.trim() || f.body.trim()) out[f.place === 'before' ? 'before' : 'after'].push(f);
+    });
+    return out;
+  }
+
+  var NO_START = '、。，．・：；？！ー―」』）］｝〉》】〕”’ぁぃぅぇぉっゃゅょゎァィゥェォッャュョヮヵヶ々,.)]}!?:;%';
+  /** 全角を 1、半角を 0.5 と数えた文字の幅 */
+  function charWidth(ch) {
+    var c = ch.codePointAt(0);
+    return c < 0x1100 || (c >= 0xff61 && c <= 0xff9f) ? 0.5 : 1;
+  }
+  /**
+   * 本文を、1 行 cols 文字（全角換算）以内の行に折る。改行はそのまま行の区切りにする（空行も 1 行）
+   * 印刷で行ごとに高さを測ってページに詰めるため（長い本文を途中で切らずに次のページへ送る）
+   * @returns {string[]}
+   */
+  function wrapText(text, cols) {
+    cols = Math.max(1, Number(cols) || 1);
+    var out = [];
+    String(text == null ? '' : text).replace(/\r\n?/g, '\n').split('\n').forEach(function (para) {
+      var cur = '', w = 0;
+      Array.from(para).forEach(function (ch) {
+        var cw = charWidth(ch);
+        if (w + cw > cols && cur) {
+          // 行頭に句読点・閉じかっこ・小さい字などを置かない（前の行の最後の 1 字と一緒に次の行へ送る）
+          var carry = '';
+          var chars = Array.from(cur);
+          if (NO_START.indexOf(ch) >= 0 && chars.length > 1) carry = chars.pop();
+          out.push(chars.join(''));
+          cur = carry; w = carry ? charWidth(carry) : 0;
+        }
+        cur += ch; w += cw;
+      });
+      out.push(cur);
+    });
+    return out;
   }
 
   /** 保存している全体 { v, active, trips }。しおりは必ず 1 つ以上 */
@@ -290,7 +347,9 @@
   // --- 共有リンク #s= ---
   // 形: 先頭 1 文字が方式（z = deflate-raw、j = 無圧縮）＋ base64url
   // 中身は短い配列: [版, タイトル, サブ, 出発, 帰着, メンバー[], 絵柄, 日[[[時刻,場所,メモ,手段,分]]], 持ち物[[名前,済]],
-  //                  宿[[名前,住所,電話,チェックイン,メモ]], 連絡先[[名前,電話,メモ]], 予算[[名前,金額,立替]], メモ, 印刷の設定(ビット)]
+  //                  宿[[名前,住所,電話,チェックイン,メモ]], 連絡先[[名前,電話,メモ]], 予算[[名前,金額,立替]], メモ, 印刷の設定(ビット),
+  //                  自由ページ[[見出し,本文,場所(0=行程の前,1=後ろ)]]]
+  // 自由ページは後から足した末尾の項目。版は 1 のまま（無いリンク＝前からのリンクも読める）
   // 画像は入れない。withContacts が false なら宿の住所・電話と連絡先を入れない
   var SHARE_V = 1;
 
@@ -305,6 +364,7 @@
       t.budget.map(function (x) { return [x.name, x.amount, x.payer]; }),
       t.notes,
       PRINT_KEYS.reduce(function (bits, k, i) { return bits | (t.print[k] ? 1 << i : 0); }, 0),
+      t.freePages.map(function (x) { return [x.title, x.body, FREE_PLACES.indexOf(x.place)]; }),
     ];
   }
 
@@ -312,9 +372,10 @@
     if (!Array.isArray(a) || a[0] !== SHARE_V) return null;
     var g = function (i) { return Array.isArray(a[i]) ? a[i] : []; };
     var row = function (x) { return Array.isArray(x) ? x : []; };
-    var bits = Number.isInteger(a[13]) ? a[13] : 63;
+    var bits = Number.isInteger(a[13]) ? a[13] : 127;
     var print = {};
     PRINT_KEYS.forEach(function (k, i) { print[k] = !!(bits & (1 << i)); });
+    if (a.length < 15) print.free = true;   // 自由ページができる前のリンク: 既定（印刷する）にする
     return normalizeTrip({
       title: a[1], sub: a[2], start: a[3], end: a[4], members: g(5), cover: COVERS[a[6]] || 'none',
       days: g(7).map(function (d) {
@@ -325,6 +386,7 @@
       contacts: g(10).map(function (x) { x = row(x); return { name: x[0], tel: x[1], memo: x[2] }; }),
       budget: g(11).map(function (x) { x = row(x); return { name: x[0], amount: x[1], payer: x[2] }; }),
       notes: a[12],
+      freePages: g(14).map(function (x) { x = row(x); return { title: x[0], body: x[1], place: FREE_PLACES[x[2]] }; }),
       print: print,
     });
   }
@@ -388,24 +450,34 @@
    * @param {Array<{h:number, breakBefore?:boolean, keepWithNext?:boolean}>} blocks
    *   breakBefore: この塊から新しいページ（表紙のあと・日の始まりなど）
    *   keepWithNext: 次の塊と同じページに置く（見出しを孤立させない）
+   *   skip: 順には置かない塊（cont で使う「（つづき）」の見出し）
+   *   cont: 塊の番号。この塊が新しいページの先頭になるとき、先にその塊（「（つづき）」の見出し）を置く
    * @param {number} cap 1 ページに入る高さ
    * @returns {number[][]} ページごとの塊の番号
    */
   function paginate(blocks, cap) {
     var pages = [], cur = [], used = 0;
     function flush() { if (cur.length) pages.push(cur); cur = []; used = 0; }
+    // 新しいページの先頭に k を置く前に、つづきの見出しを置く
+    function lead(k) {
+      var c = blocks[k].cont;
+      if (!cur.length && c !== undefined && c !== null && blocks[c]) { cur.push(c); used += blocks[c].h; }
+    }
     function put(k) {
       if (used + blocks[k].h > cap && cur.length) flush();
+      lead(k);
       cur.push(k); used += blocks[k].h;
     }
     var i = 0;
     while (i < blocks.length) {
+      if (blocks[i].skip) { i++; continue; }
       // keepWithNext でつながった塊をひとまとめにする（見出し＋最初の行）
       var j = i, h = blocks[i].h;
-      while (blocks[j].keepWithNext && j + 1 < blocks.length && !blocks[j + 1].breakBefore) { j++; h += blocks[j].h; }
+      while (blocks[j].keepWithNext && j + 1 < blocks.length && !blocks[j + 1].breakBefore && !blocks[j + 1].skip) { j++; h += blocks[j].h; }
       if (blocks[i].breakBefore) flush();
       if (h <= cap) {
         if (used + h > cap) flush();
+        lead(i);
         for (var m = i; m <= j; m++) cur.push(m);
         used += h;
       } else if (j > i) {
@@ -494,6 +566,7 @@
     formatMin: formatMin, daySummary: daySummary, tripMoveTotal: tripMoveTotal,
     splitEven: splitEven, settle: settle, toEasySplit: toEasySplit, easySplitUrl: easySplitUrl,
     encodeShare: encodeShare, decodeShare: decodeShare, packTrip: packTrip, unpackTrip: unpackTrip,
+    FREE_PLACES: FREE_PLACES, freeOrder: freeOrder, wrapText: wrapText,
     mapUrl: mapUrl, paginate: paginate, padTo4: padTo4, imposeBooklet: imposeBooklet,
     backupFileName: backupFileName, buildBackup: buildBackup, parseBackup: parseBackup,
   };

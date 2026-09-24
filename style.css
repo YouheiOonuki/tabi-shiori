@@ -234,6 +234,8 @@ label.inline input { width: 1.1rem; height: 1.1rem; flex: none; accent-color: va
 .summary p + p, .summary p + ul { margin-top: 0.3rem; }
 .sum-h { font-weight: 600; }
 .transfers { padding-left: 1.2rem; }
+.free-tools { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+.count { font-weight: 400; font-size: 0.8rem; color: var(--muted); }
 .share-url { width: 100%; font-size: 0.8rem; margin-top: 0.3rem; }
 
 /* 印刷の見本 */
@@ -295,6 +297,9 @@ label.inline input { width: 1.1rem; height: 1.1rem; flex: none; accent-color: va
 .paper .p-num { flex: none; font-variant-numeric: tabular-nums; }
 .paper .p-gap { margin-top: 2mm; }
 .paper .p-note { padding: 1mm 0; word-break: break-word; }
+/* 自由ページの本文: 1 行ずつの塊（main.js で折った行）。空白と空行をそのまま出す */
+.paper .p-free { white-space: pre-wrap; overflow-wrap: anywhere; }
+.paper .p-free:empty::before { content: "\00a0"; }
 
 @media (max-width: 480px) {
   .cover-pick { grid-template-columns: repeat(3, 1fr); }

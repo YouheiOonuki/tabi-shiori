@@ -93,6 +93,7 @@
     renderStays();
     renderContacts();
     renderBudget();
+    renderFree();
     document.querySelectorAll('input[name="mode"]').forEach(function (r) { r.checked = r.value === mode; });
     renderPrintHelp();
     if (!$('preview').hidden) renderPreview();
@@ -259,6 +260,33 @@
     }).join('');
   }
 
+  // 自由ページ（見出し＋本文。決定 D61）
+  var FREE_PLACE_LABELS = { before: '行程の前', after: '行程の後ろ' };
+  function num(n) { return n.toLocaleString('ja-JP'); }
+  function freeCount(i) { return '（' + num(cur().freePages[i].body.length) + ' / ' + num(C.LIMITS.freeBody) + ' 字）'; }
+  function renderFree() {
+    var t = cur(), n = t.freePages.length;
+    $('free-pages').innerHTML = t.freePages.map(function (x, i) {
+      var b = 'freePages.' + i + '.', id = 'fp' + i;
+      return '<div class="entry">' +
+        field(id + 't', '見出し', '<input type="text" id="' + id + 't" data-p="' + b + 'title" maxlength="' + C.LIMITS.freeTitle + '" value="' + esc(x.title) + '">') +
+        '<div class="field"><label for="' + id + 'b">本文 <span class="count" id="' + id + 'c">' + freeCount(i) + '</span></label>' +
+          '<textarea id="' + id + 'b" data-p="' + b + 'body" rows="3" maxlength="' + C.LIMITS.freeBody + '">' + esc(x.body) + '</textarea></div>' +
+        field(id + 'p', '入れる場所', '<select id="' + id + 'p" data-p="' + b + 'place">' + C.FREE_PLACES.map(function (v) {
+          return '<option value="' + v + '"' + (x.place === v ? ' selected' : '') + '>' + FREE_PLACE_LABELS[v] + '</option>';
+        }).join('') + '</select>') +
+        '<div class="free-tools">' +
+          '<button type="button" class="mini" data-act="free-up" data-i="' + i + '"' + (i === 0 ? ' disabled' : '') + '>上へ</button>' +
+          '<button type="button" class="mini" data-act="free-down" data-i="' + i + '"' + (i === n - 1 ? ' disabled' : '') + '>下へ</button>' +
+          '<button type="button" class="mini danger" data-act="free-del" data-i="' + i + '">削除</button>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+    $('h-free').textContent = '自由ページ' + (n ? '（' + n + ' / ' + C.LIMITS.freePages + '）' : '');
+    $('free-add').disabled = n >= C.LIMITS.freePages;
+    growAll($('free-pages'));
+  }
+
   function field(id, label, input) {
     return '<div class="field"><label for="' + id + '">' + esc(label) + '</label>' + input + '</div>';
   }
@@ -337,6 +365,8 @@
       }
     }
     if (/^budget\./.test(p)) updateBudgetSummary();
+    var fm = /^freePages\.(\d+)\.body$/.exec(p);
+    if (fm && $('fp' + fm[1] + 'c')) $('fp' + fm[1] + 'c').textContent = freeCount(Number(fm[1]));
     if (/^packing\./.test(p)) {
       var done = t.packing.filter(function (x) { return x.done; }).length;
       $('h-packing').textContent = '持ち物チェックリスト（' + done + ' / ' + t.packing.length + '）';
@@ -421,6 +451,16 @@
         if (t.contacts[ii].name && !confirm('「' + t.contacts[ii].name + '」を削除しますか？')) return;
         t.contacts.splice(ii, 1); renderContacts(); break;
       case 'budget-del': t.budget.splice(ii, 1); renderBudget(); break;
+      case 'free-up': case 'free-down':
+        var fj = act === 'free-up' ? ii - 1 : ii + 1;
+        if (fj < 0 || fj >= t.freePages.length) return;
+        var fx = t.freePages[ii]; t.freePages[ii] = t.freePages[fj]; t.freePages[fj] = fx;
+        renderFree(); var fb = document.querySelector('[data-act="' + act + '"][data-i="' + fj + '"]'); if (fb && !fb.disabled) fb.focus();
+        break;
+      case 'free-del':
+        var fp = t.freePages[ii];
+        if ((fp.title || fp.body) && !confirm('自由ページ「' + (fp.title || '見出しなし') + '」を削除しますか？')) return;
+        t.freePages.splice(ii, 1); renderFree(); break;
       default: return;
     }
     save();
@@ -469,6 +509,10 @@
   $('contact-add').addEventListener('click', function () {
     var t = cur(); if (t.contacts.length >= C.LIMITS.contacts) return;
     t.contacts.push({ name: '', tel: '', memo: '' }); renderContacts(); save(); focusLater('ct' + (t.contacts.length - 1) + 'n');
+  });
+  $('free-add').addEventListener('click', function () {
+    var t = cur(); if (t.freePages.length >= C.LIMITS.freePages) return;
+    t.freePages.push({ id: C.emptyTrip().id, title: '', body: '', place: 'after' }); renderFree(); save(); focusLater('fp' + (t.freePages.length - 1) + 't');
   });
   $('budget-add').addEventListener('click', function () {
     var t = cur(); if (t.budget.length >= C.LIMITS.budget) return;
@@ -538,10 +582,31 @@
       : '印刷の画面で、用紙「A4」・向き「縦」・倍率 100% を選びます。PDF にするときは、送信先・プリンターで「PDF に保存」を選びます。';
   }
 
-  // 印刷用の塊（ブロック）を作る。{ html, breakBefore, keepWithNext }
-  function buildBlocks(t) {
+  // 印刷用の塊（ブロック）を作る。{ html, breakBefore, keepWithNext, skip, cont }
+  // cols: 自由ページの本文を折る 1 行の文字数（全角換算。buildPages で紙の幅から測る）
+  function buildBlocks(t, cols) {
     var B = [];
-    var add = function (html, o) { B.push(Object.assign({ html: html }, o || {})); };
+    var breakNext = false;   // 自由ページのあとは新しいページから
+    var add = function (html, o) {
+      var b = Object.assign({ html: html }, o || {});
+      if (breakNext && !b.skip) { b.breakBefore = true; breakNext = false; }
+      B.push(b);
+    };
+    // 自由ページ: 見出し＋本文を 1 ページから始め、本文は 1 行ずつの塊にしてページに詰める
+    // （入りきらない分は次のページへ。次のページの先頭には「見出し（つづき）」を置く）
+    var freePage = function (f) {
+      var lines = f.body.replace(/\s+$/, '') ? C.wrapText(f.body.replace(/\s+$/, ''), cols) : [];
+      var cont;
+      if (f.title) {
+        cont = B.length;
+        add('<h2 class="p-h">' + esc(f.title) + '（つづき）</h2>', { skip: true });
+        add('<h2 class="p-h">' + esc(f.title) + '</h2>', { breakBefore: true, keepWithNext: lines.length > 0 });
+      } else breakNext = true;
+      lines.forEach(function (ln) { add('<div class="p-free">' + esc(ln) + '</div>', { cont: cont }); });
+      breakNext = true;
+    };
+    var free = C.freeOrder(t);
+    free.before.forEach(freePage);
     var moveText = function (it) {
       if (!it.move && !it.min) return '';
       return '<div class="p-move">↓ ' + esc(it.move || '移動') + (it.min ? '　' + esc(C.formatMin(it.min)) : '') + '</div>';
@@ -560,6 +625,7 @@
       if (!day.items.length) add('<div class="p-empty">（予定なし）</div>');
       if (s.total) add('<div class="p-total">この日の移動 ' + esc(C.formatMin(s.total)) + '</div>');
     });
+    free.after.forEach(freePage);
     var section = function (title, rows) {
       if (!rows.length) return;
       add('<h2 class="p-h">' + esc(title) + '</h2>', { keepWithNext: true });
@@ -623,15 +689,19 @@
 
   // 論理ページ（読む順）の HTML を作る。1 ページ目は表紙
   function buildPages(t, m) {
-    var blocks = buildBlocks(t);
     var box = $('measure');
     box.className = 'paper ' + (m === 'booklet' ? 'size-a5' : 'size-a4');
+    // 自由ページの本文の 1 行に入る全角の文字数（紙の本文の幅 ÷ 全角 1 文字の幅）
+    box.innerHTML = '<div class="pg"><div class="pg-body"><div class="blk"><span class="p-free" id="measure-ch">ああああああああああ</span></div></div></div>';
+    var ch = $('measure-ch'), cw = ch.getBoundingClientRect().width / 10;
+    var cols = cw > 0 ? Math.max(1, Math.floor(ch.parentNode.clientWidth / cw - 0.05)) : 30;
+    var blocks = buildBlocks(t, cols);
     box.innerHTML = '<div class="pg"><div class="pg-body" id="measure-body">' + blocks.map(function (b) { return '<div class="blk">' + b.html + '</div>'; }).join('') + '</div></div>';
     var body = $('measure-body');
     var cap = body.clientHeight;
     var heights = Array.prototype.map.call(body.children, function (el) { return el.getBoundingClientRect().height; });
     box.innerHTML = '';
-    var groups = C.paginate(blocks.map(function (b, i) { return { h: heights[i], breakBefore: b.breakBefore, keepWithNext: b.keepWithNext }; }), cap);
+    var groups = C.paginate(blocks.map(function (b, i) { return { h: heights[i], breakBefore: b.breakBefore, keepWithNext: b.keepWithNext, skip: b.skip, cont: b.cont }; }), cap);
     var pages = ['<div class="pg-body">' + coverHtml(t) + '</div>'];
     groups.forEach(function (g) {
       pages.push('<div class="pg-body">' + g.map(function (i) { return '<div class="blk">' + blocks[i].html + '</div>'; }).join('') + '</div>');
@@ -769,7 +839,7 @@
   });
 
   function isBlank(t) {
-    return !t.title && !t.start && !t.members.length && !t.packing.length && !t.stays.length && !t.contacts.length && !t.budget.length && !t.notes &&
+    return !t.title && !t.start && !t.members.length && !t.packing.length && !t.stays.length && !t.contacts.length && !t.budget.length && !t.notes && !t.freePages.length &&
       t.days.every(function (d) { return !d.items.length; });
   }
 

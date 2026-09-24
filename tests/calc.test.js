@@ -227,7 +227,7 @@ test('共有リンク: 印刷の設定を運ぶ', async () => {
   const t = sampleTrip();
   t.print.credit = false; t.print.budget = false;
   const back = await C.decodeShare(await C.encodeShare(t));
-  assert.deepEqual(back.print, { credit: false, packing: true, stays: true, contacts: true, budget: false, notes: true });
+  assert.deepEqual(back.print, { credit: false, packing: true, stays: true, contacts: true, budget: false, notes: true, free: true });
 });
 
 test('共有リンク: 壊れたもの・ほかの形は null', async () => {
