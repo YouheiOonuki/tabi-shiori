@@ -305,3 +305,9 @@ test('imposeBooklet: どのページも 1 回ずつ・向かい合うページ�
     C.imposeBooklet(n).forEach((s) => assert.equal(s.left + s.right, n + 1));
   }
 });
+
+test('印刷のクレジットは紙から来た人の着地ページ /tabi-shiori/print/ に向ける', () => {
+  assert.equal(C.CREDIT, 'yorozu-craft.com/tabi-shiori/print/ で作成');
+  // 既定で表示（設定で外せる）
+  assert.equal(C.emptyTrip().print.credit, true);
+});
