@@ -49,6 +49,12 @@
 </head>
 <body class="tool-page">
 
+  <!-- 上端の固定バー（SCREEN.md 1.2・D59）: 印刷ボタンが画面の外にあるときだけ「印刷する」を出す（screen.js）。読み込み時は hidden -->
+  <div class="fixbar" id="fixbar" role="status" hidden>
+    <span class="fixbar-type" id="fixbar-text"></span>
+    <button type="button" class="btn" id="fixbar-print">印刷する</button>
+  </div>
+
   <header class="app-header">
     <h1>旅のしおりメーカー</h1>
     <p class="subtitle">登録不要・無料で印刷できる旅のしおり。行程に移動時間、持ち物、宿・連絡先、予算と割り勘まで。A4 と A5 冊子で印刷・PDF 保存。</p>
@@ -67,9 +73,8 @@
     </div>
     <p id="load-msg" class="notice" role="status" hidden></p>
 
-    <!-- しおりの切り替え -->
-    <section class="card" id="sec-trips" aria-labelledby="h-trips">
-      <h2 id="h-trips">しおり</h2>
+    <!-- しおりの切り替え（SCREEN.md 1.2 の「いま編集している 1 枚」。他のしおりはここで切り替える） -->
+    <section class="card" id="sec-trips" aria-label="しおり">
       <div class="field">
         <label for="trip-select">編集するしおり</label>
         <select id="trip-select"></select>
@@ -79,12 +84,11 @@
         <button type="button" id="trip-dup" class="btn btn-sub">複製する</button>
         <button type="button" id="trip-del" class="btn btn-sub">削除する</button>
       </div>
-      <p class="small">入力するたびに、この端末のブラウザに自動で保存します。しおりは 30 件まで持てます。</p>
     </section>
 
-    <!-- 1. 表紙 -->
-    <section class="card" id="sec-cover" aria-labelledby="h-cover">
-      <h2 id="h-cover">表紙</h2>
+    <!-- 1. 表紙（summary に今の状態。開いた状態は保存しない） -->
+    <details class="card opt" id="sec-cover">
+      <summary>表紙: <span class="opt-state"></span></summary>
       <div class="field">
         <label for="f-title">タイトル</label>
         <input type="text" id="f-title" data-p="title" maxlength="60" placeholder="例：秋の京都 家族旅行">
@@ -124,7 +128,7 @@
         <img id="img-thumb" class="img-thumb" alt="表紙の写真" width="160" height="100" hidden>
         <p id="img-msg" class="small" aria-live="polite"></p>
       </div>
-    </section>
+    </details>
 
     <!-- 2. 行程 -->
     <section class="card" id="sec-days" aria-labelledby="h-days">
@@ -138,9 +142,44 @@
       <p class="total-line" id="move-total" aria-live="polite"></p>
     </section>
 
-    <!-- 3. 持ち物 -->
-    <section class="card" id="sec-packing" aria-labelledby="h-packing">
-      <h2 id="h-packing">持ち物チェックリスト</h2>
+    <!-- 3. 印刷（主なボタン。SCREEN.md 1.2 の 2〜5。上端の固定バーにも同じボタン） -->
+    <section class="card" id="sec-print" aria-labelledby="h-print">
+      <h2 id="h-print">印刷・PDF</h2>
+      <fieldset class="field">
+        <legend>用紙</legend>
+        <label class="inline"><input type="radio" name="mode" value="a4" checked> A4 縦（そのまま綴じる）</label>
+        <label class="inline"><input type="radio" name="mode" value="booklet"> A5 冊子（A4 横に 2 ページずつ・折って冊子）</label>
+      </fieldset>
+      <div class="btn-row">
+        <button type="button" id="print" class="btn">印刷する・PDF に保存</button>
+        <button type="button" id="preview-btn" class="btn btn-sub" aria-expanded="false" aria-controls="preview">印刷の見本を見る</button>
+      </div>
+      <div id="preview" class="preview" hidden></div>
+      <details class="rels" id="opt-items">
+        <summary>印刷する項目: <span class="opt-state"></span></summary>
+        <fieldset class="field">
+          <legend class="visually-hidden">印刷する項目</legend>
+          <div class="check-grid">
+            <label class="inline"><input type="checkbox" data-p="print.packing" data-type="bool"> 持ち物</label>
+            <label class="inline"><input type="checkbox" data-p="print.stays" data-type="bool"> 宿</label>
+            <label class="inline"><input type="checkbox" data-p="print.contacts" data-type="bool"> 連絡先</label>
+            <label class="inline"><input type="checkbox" data-p="print.budget" data-type="bool"> 予算・割り勘</label>
+            <label class="inline"><input type="checkbox" data-p="print.notes" data-type="bool"> メモ</label>
+            <label class="inline"><input type="checkbox" data-p="print.free" data-type="bool"> 自由ページ</label>
+            <label class="inline"><input type="checkbox" data-p="print.credit" data-type="bool"> 最後のページに「yorozu-craft.com/tabi-shiori/print/ で作成」と小さく入れる</label>
+          </div>
+        </fieldset>
+      </details>
+      <details class="rels" id="opt-howto">
+        <summary>印刷の画面で選ぶもの: <span class="opt-state"></span></summary>
+        <p class="small" id="print-help"></p>
+        <p class="small"><a href="../print-help.html">スマホで印刷するには →</a></p>
+      </details>
+    </section>
+
+    <!-- 4. 持ち物 -->
+    <details class="card opt" id="sec-packing">
+      <summary>持ち物チェックリスト: <span class="opt-state"></span></summary>
       <div class="field">
         <label for="preset">定番から追加</label>
         <div class="inline-row">
@@ -155,76 +194,48 @@
         <input type="text" id="pack-new" maxlength="40" placeholder="持ち物を入力">
         <button type="button" id="pack-add" class="btn btn-sub">追加</button>
       </div>
-    </section>
+    </details>
 
-    <!-- 4. 宿・連絡先 -->
-    <section class="card" id="sec-stays" aria-labelledby="h-stays">
-      <h2 id="h-stays">宿・連絡先</h2>
+    <!-- 5. 宿・連絡先 -->
+    <details class="card opt" id="sec-stays">
+      <summary>宿・連絡先: <span class="opt-state"></span></summary>
       <h3 class="sub-h">宿</h3>
       <div id="stays"></div>
       <button type="button" id="stay-add" class="btn btn-sub">宿を追加</button>
       <h3 class="sub-h">連絡先</h3>
       <div id="contacts"></div>
       <button type="button" id="contact-add" class="btn btn-sub">連絡先を追加</button>
-    </section>
+    </details>
 
-    <!-- 5. 予算・割り勘 -->
-    <section class="card" id="sec-budget" aria-labelledby="h-budget">
-      <h2 id="h-budget">予算・割り勘</h2>
+    <!-- 6. 予算・割り勘 -->
+    <details class="card opt" id="sec-budget">
+      <summary>予算・割り勘: <span class="opt-state"></span></summary>
       <p class="hint">費用と、立て替えた人を入れると、1 人あたりの額と「誰が誰にいくら払うか」を出します（全員で同じ額を負担する計算）。</p>
       <div id="budget"></div>
       <button type="button" id="budget-add" class="btn btn-sub">費用を追加</button>
       <div id="budget-summary" class="summary" aria-live="polite"></div>
       <p class="small" id="es-wrap"></p>
-    </section>
+    </details>
 
-    <!-- 6. メモ -->
-    <section class="card" id="sec-notes" aria-labelledby="h-notes">
-      <h2 id="h-notes">メモ</h2>
+    <!-- 7. メモ -->
+    <details class="card opt" id="sec-notes">
+      <summary>メモ: <span class="opt-state"></span></summary>
       <label for="f-notes" class="visually-hidden">メモ</label>
       <textarea id="f-notes" data-p="notes" rows="4" maxlength="3000" placeholder="例：雨の日の予定、集合の約束、おみやげリスト"></textarea>
-    </section>
+    </details>
 
-    <!-- 6-2. 自由ページ（見出し＋本文。決定 D61） -->
-    <section class="card" id="sec-free" aria-labelledby="h-free">
-      <h2 id="h-free">自由ページ</h2>
+    <!-- 8. 自由ページ（見出し＋本文。決定 D61） -->
+    <details class="card opt" id="sec-free">
+      <summary>自由ページ: <span class="opt-state"></span></summary>
       <p class="hint">見出しと本文を、しおりの 1 ページとして印刷します。</p>
       <div id="free-pages"></div>
       <button type="button" id="free-add" class="btn btn-sub">ページを足す</button>
-    </section>
+    </details>
 
-    <!-- 7. 印刷 -->
-    <section class="card" id="sec-print" aria-labelledby="h-print">
-      <h2 id="h-print">印刷・PDF</h2>
-      <fieldset class="field">
-        <legend>用紙</legend>
-        <label class="inline"><input type="radio" name="mode" value="a4" checked> A4 縦（そのまま綴じる）</label>
-        <label class="inline"><input type="radio" name="mode" value="booklet"> A5 冊子（A4 横に 2 ページずつ・折って冊子）</label>
-      </fieldset>
-      <fieldset class="field">
-        <legend>印刷する項目</legend>
-        <div class="check-grid">
-          <label class="inline"><input type="checkbox" data-p="print.packing" data-type="bool"> 持ち物</label>
-          <label class="inline"><input type="checkbox" data-p="print.stays" data-type="bool"> 宿</label>
-          <label class="inline"><input type="checkbox" data-p="print.contacts" data-type="bool"> 連絡先</label>
-          <label class="inline"><input type="checkbox" data-p="print.budget" data-type="bool"> 予算・割り勘</label>
-          <label class="inline"><input type="checkbox" data-p="print.notes" data-type="bool"> メモ</label>
-          <label class="inline"><input type="checkbox" data-p="print.free" data-type="bool"> 自由ページ</label>
-          <label class="inline"><input type="checkbox" data-p="print.credit" data-type="bool"> 最後のページに「yorozu-craft.com/tabi-shiori/print/ で作成」と小さく入れる</label>
-        </div>
-      </fieldset>
-      <div class="btn-row">
-        <button type="button" id="print" class="btn">印刷する・PDF に保存</button>
-        <button type="button" id="preview-btn" class="btn btn-sub" aria-expanded="false" aria-controls="preview">印刷の見本を見る</button>
-      </div>
-      <p class="small" id="print-help"></p>
-      <p class="small"><a href="../print-help.html">スマホで印刷するには →</a></p>
-      <div id="preview" class="preview" hidden></div>
-    </section>
-
-    <!-- 8. 共有・保存 -->
-    <section class="card" id="sec-share" aria-labelledby="h-share">
-      <h2 id="h-share">共有・バックアップ</h2>
+    <!-- 9. 共有・保存（SCREEN.md 1.2 の 7） -->
+    <details class="card opt" id="sec-share">
+      <summary>共有・保存とバックアップ</summary>
+      <p class="small">入力するたびに、この端末のブラウザに自動で保存します。しおりは 30 件まで持てます。</p>
       <label class="inline field"><input type="checkbox" id="share-contacts"> 宿の住所・電話番号と連絡先もリンクに入れる</label>
       <p id="share-warn" class="warn-box" hidden>電話番号・住所がリンクに入ります。リンクを受け取った人は誰でも読めます。家族や同行者だけに送ってください。</p>
       <div class="btn-row">
@@ -242,7 +253,7 @@
       <input type="file" id="backup-file" accept=".json,application/json" hidden>
       <p id="backup-msg" class="small" aria-live="polite"></p>
       <p class="small">ファイルには、この端末のすべてのしおり（写真を含む）が入ります。</p>
-    </section>
+    </details>
 
     <p class="small center"><a href="./guide.html">使い方・印刷のコツ・よくある質問</a></p>
 
@@ -268,6 +279,7 @@
 
   <script src="./presets.js"></script>
   <script src="./calc.js"></script>
+  <script src="./screen.js"></script>
   <script src="./main.js"></script>
   <!-- Cloudflare Web Analytics（Cookie を使わないアクセス解析） --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "b79bf821e1fd4b6683866d493b1de426"}'></script><!-- End Cloudflare Web Analytics -->
 </body>
