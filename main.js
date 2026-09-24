@@ -619,7 +619,7 @@
     '</div>';
   }
 
-  var CREDIT = 'yorozu-craft.com/tabi-shiori で作成';
+  var CREDIT = C.CREDIT;
 
   // 論理ページ（読む順）の HTML を作る。1 ページ目は表紙
   function buildPages(t, m) {

@@ -483,8 +483,12 @@
     return { ok: true, data: data };
   }
 
+  // 印刷物の最後のページに小さく入れるクレジット（既定で表示、「印刷する項目」で外せる）。
+  // 紙から来た人を数えるため、着地ページ /tabi-shiori/print/ に向ける（サイト README「ツールを追加するとき」22）
+  var CREDIT = 'yorozu-craft.com/tabi-shiori/print/ で作成';
+
   var api = {
-    COVERS: COVERS, MOVES: MOVES, LIMITS: LIMITS, SHARE_MAX: SHARE_MAX, BACKUP_MAX_BYTES: BACKUP_MAX_BYTES,
+    CREDIT: CREDIT, COVERS: COVERS, MOVES: MOVES, LIMITS: LIMITS, SHARE_MAX: SHARE_MAX, BACKUP_MAX_BYTES: BACKUP_MAX_BYTES,
     emptyTrip: emptyTrip, normalizeTrip: normalizeTrip, normalizeStore: normalizeStore,
     isDate: isDate, isTime: isTime, tripDays: tripDays, nightsLabel: nightsLabel, dateJa: dateJa, dayDate: dayDate, rangeJa: rangeJa,
     formatMin: formatMin, daySummary: daySummary, tripMoveTotal: tripMoveTotal,
