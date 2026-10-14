@@ -204,7 +204,7 @@ a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset:
   background: var(--accent-soft); border: 1px solid var(--accent); border-radius: 8px;
   padding: 0.8rem 1rem; margin-bottom: 1rem; font-size: 0.9rem;
 }
-.notice p + .btn-row { margin-top: 0.6rem; }
+.notice p + .btn-row, .notice h2 + .btn-row { margin-top: 0.6rem; }
 .warn-box { background: var(--warn-bg); color: var(--warn); border-radius: 6px; padding: 0.5rem 0.7rem; font-size: 0.85rem; margin: 0.4rem 0 0.6rem; }
 
 /* 入力欄（テンプレートの .field に、時刻・日付・電話・複数行を足す） */
