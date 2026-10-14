@@ -61,10 +61,11 @@
 
   <main class="app-main">
 
-    <p class="badge">登録不要・印刷は無料・入力はこの端末のブラウザにだけ保存し、外部に送信しません</p>
+    <!-- data-keep: A2 の定型（登録不要・無料・入力は端末の外に出ない） -->
+    <p class="badge" data-keep>登録不要・印刷は無料・入力はこの端末のブラウザにだけ保存し、外部に送信しません</p>
 
     <div id="shared-banner" class="notice" role="status" hidden>
-      <p><strong>共有されたしおりを表示しています。</strong>まだこの端末には保存していません。直したり印刷したりするだけなら、このままで使えます。</p>
+      <h2>共有されたしおり（この端末にはまだ保存していません）</h2>
       <div class="btn-row">
         <button type="button" id="shared-save" class="btn">このしおりを保存して編集する</button>
         <a href="./#new" id="shared-new" class="btn btn-sub">自分のしおりを作る</a>
@@ -132,7 +133,6 @@
     <!-- 2. 行程 -->
     <section class="card" id="sec-days" aria-labelledby="h-days">
       <h2 id="h-days">行程</h2>
-      <p class="hint">「↓ 次へ」には、その場所から次の場所までの移動手段と移動時間を入れます。</p>
       <div id="days"></div>
       <div class="btn-row">
         <button type="button" id="day-add" class="btn btn-sub">日を追加</button>
