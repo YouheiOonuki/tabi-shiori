@@ -114,7 +114,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
   margin-top: var(--sp-2);
 }
 .footer-nav ul { list-style: none; display: flex; justify-content: center; flex-wrap: wrap; gap: var(--sp-2) 1.1rem; margin-bottom: var(--sp-2); }
-.footer-nav a { color: var(--muted); text-decoration: none; }
+.footer-nav a { display: inline-flex; align-items: center; min-height: var(--tap); color: var(--muted); text-decoration: none; }
 .footer-nav a:hover, .footer-nav a[aria-current="page"] { color: var(--accent); }
 
 /* ===========================
@@ -161,7 +161,7 @@ a.btn { color: var(--text); }
 .cover-opt { position: relative; display: block; border: 2px solid var(--input-border); border-radius: var(--radius); padding: var(--sp-1); cursor: pointer; text-align: center; background: var(--card); }
 .cover-opt input { position: absolute; opacity: 0; }
 .cover-opt:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); }
-.cover-opt:has(input:focus-visible) { outline: 4px solid var(--focus-ring); outline-offset: 2px; }
+.cover-opt:has(input:focus-visible) { outline: 4px solid var(--focus-ring); outline-offset: 2px; box-shadow: 0 0 0 2px var(--focus); }
 .cover-art { display: block; aspect-ratio: 12 / 7; background: #fff; border-radius: var(--radius); overflow: hidden; }
 .cover-art svg { width: 100%; height: 100%; display: block; }
 .cover-none { display: flex; height: 100%; align-items: center; justify-content: center; color: #4c565f; font-size: var(--fs-s); }
@@ -169,7 +169,7 @@ a.btn { color: var(--text); }
 .img-thumb { display: block; width: 160px; height: auto; max-height: 120px; object-fit: cover; border-radius: var(--radius); border: 1px solid var(--border); margin-top: var(--sp-2); }
 
 /* 行程 */
-.day { border: 1px solid var(--border); border-radius: var(--radius); padding: var(--sp-3); margin-bottom: var(--sp-3); }
+.day { border-top: 1px solid var(--border); padding-top: var(--sp-3); margin-bottom: var(--sp-3); }   /* 面の中なので箱にせず区切りの線（面の入れ子をしない） */
 .day-head { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-2); margin-bottom: var(--sp-2); }
 .items { list-style: none; margin-bottom: var(--sp-3); }
 .item { border-bottom: 1px solid var(--border); padding-bottom: var(--sp-3); margin-bottom: var(--sp-3); }
@@ -193,7 +193,7 @@ a.btn { color: var(--text); }
 .check-list label.inline { margin: 0; }
 .check-list input[type="checkbox"] { width: 1.3rem; height: 1.3rem; }
 .check-grid { display: grid; grid-template-columns: 1fr; gap: var(--sp-1); }
-.entry { border: 1px solid var(--border); border-radius: var(--radius); padding: var(--sp-3); margin-bottom: var(--sp-3); }
+.entry { border-top: 1px solid var(--border); padding-top: var(--sp-3); margin-bottom: var(--sp-3); }
 .entry .field { margin-bottom: var(--sp-2); }
 .budget-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0 var(--sp-3); align-items: end; }
 .budget-row .field:first-child { grid-column: 1 / -1; }
