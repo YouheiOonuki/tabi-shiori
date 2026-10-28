@@ -18,8 +18,8 @@
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="theme-color" content="#8b4513" media="(prefers-color-scheme: light)">
-  <meta name="theme-color" content="#1c1814" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#eef0f2" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#15191d" media="(prefers-color-scheme: dark)">
 
   <script type="application/ld+json">
   {
@@ -51,7 +51,7 @@
   <!-- 上端の固定バー（SCREEN.md 1.2・D59）: 印刷ボタンが画面の外にあるときだけ「印刷する」を出す（screen.js）。読み込み時は hidden -->
   <div class="fixbar" id="fixbar" role="status" hidden>
     <span class="fixbar-type" id="fixbar-text"></span>
-    <button type="button" class="btn" id="fixbar-print">印刷する</button>
+    <button type="button" class="btn btn-primary" id="fixbar-print">印刷する</button>
   </div>
 
   <header class="app-header">
@@ -68,7 +68,7 @@
       <h2>共有されたしおり（この端末にはまだ保存していません）</h2>
       <div class="btn-row">
         <button type="button" id="shared-save" class="btn">このしおりを保存して編集する</button>
-        <a href="./#new" id="shared-new" class="btn btn-sub">自分のしおりを作る</a>
+        <a href="./#new" id="shared-new" class="btn">自分のしおりを作る</a>
       </div>
     </div>
     <p id="load-msg" class="notice" role="status" hidden></p>
@@ -80,9 +80,9 @@
         <select id="trip-select"></select>
       </div>
       <div class="btn-row">
-        <button type="button" id="trip-new" class="btn btn-sub">新しく作る</button>
-        <button type="button" id="trip-dup" class="btn btn-sub">複製する</button>
-        <button type="button" id="trip-del" class="btn btn-sub">削除する</button>
+        <button type="button" id="trip-new" class="btn">新しく作る</button>
+        <button type="button" id="trip-dup" class="btn">複製する</button>
+        <button type="button" id="trip-del" class="btn">削除する</button>
       </div>
     </section>
 
@@ -121,8 +121,8 @@
         <span class="label">表紙の写真（任意）</span>
         <p class="hint">写真は端末の中で小さくしてから、このブラウザにだけ保存します。</p>
         <div class="btn-row">
-          <button type="button" id="img-pick" class="btn btn-sub">写真を選ぶ</button>
-          <button type="button" id="img-del" class="btn btn-sub" hidden>写真を外す</button>
+          <button type="button" id="img-pick" class="btn">写真を選ぶ</button>
+          <button type="button" id="img-del" class="btn" hidden>写真を外す</button>
         </div>
         <input type="file" id="img-file" accept="image/*" hidden>
         <img id="img-thumb" class="img-thumb" alt="表紙の写真" width="160" height="100" hidden>
@@ -135,8 +135,8 @@
       <h2 id="h-days">行程</h2>
       <div id="days"></div>
       <div class="btn-row">
-        <button type="button" id="day-add" class="btn btn-sub">日を追加</button>
-        <button type="button" id="day-fit" class="btn btn-sub" hidden>日程に合わせて日を増やす</button>
+        <button type="button" id="day-add" class="btn">日を追加</button>
+        <button type="button" id="day-fit" class="btn" hidden>日程に合わせて日を増やす</button>
       </div>
       <p class="total-line" id="move-total" aria-live="polite"></p>
     </section>
@@ -150,8 +150,8 @@
         <label class="inline"><input type="radio" name="mode" value="booklet"> A5 冊子（A4 横に 2 ページずつ・折って冊子）</label>
       </fieldset>
       <div class="btn-row">
-        <button type="button" id="print" class="btn">印刷する・PDF に保存</button>
-        <button type="button" id="preview-btn" class="btn btn-sub" aria-expanded="false" aria-controls="preview">印刷の見本を見る</button>
+        <button type="button" id="print" class="btn btn-primary">印刷する・PDF に保存</button>
+        <button type="button" id="preview-btn" class="btn" aria-expanded="false" aria-controls="preview">印刷の見本を見る</button>
       </div>
       <div id="preview" class="preview" hidden></div>
       <details class="rels" id="opt-items">
@@ -183,7 +183,7 @@
         <label for="preset">定番から追加</label>
         <div class="inline-row">
           <select id="preset"></select>
-          <button type="button" id="preset-add" class="btn btn-sub">追加</button>
+          <button type="button" id="preset-add" class="btn">追加</button>
         </div>
         <p class="small" id="preset-msg" aria-live="polite"></p>
       </div>
@@ -191,7 +191,7 @@
       <div class="inline-row">
         <label for="pack-new" class="visually-hidden">持ち物を追加</label>
         <input type="text" id="pack-new" maxlength="40" placeholder="持ち物を入力">
-        <button type="button" id="pack-add" class="btn btn-sub">追加</button>
+        <button type="button" id="pack-add" class="btn">追加</button>
       </div>
     </details>
 
@@ -200,10 +200,10 @@
       <summary>宿・連絡先: <span class="opt-state"></span></summary>
       <h3 class="sub-h">宿</h3>
       <div id="stays"></div>
-      <button type="button" id="stay-add" class="btn btn-sub">宿を追加</button>
+      <button type="button" id="stay-add" class="btn">宿を追加</button>
       <h3 class="sub-h">連絡先</h3>
       <div id="contacts"></div>
-      <button type="button" id="contact-add" class="btn btn-sub">連絡先を追加</button>
+      <button type="button" id="contact-add" class="btn">連絡先を追加</button>
     </details>
 
     <!-- 6. 予算・割り勘 -->
@@ -211,7 +211,7 @@
       <summary>予算・割り勘: <span class="opt-state"></span></summary>
       <p class="hint">費用と、立て替えた人を入れると、1 人あたりの額と「誰が誰にいくら払うか」を出します（全員で同じ額を負担する計算）。</p>
       <div id="budget"></div>
-      <button type="button" id="budget-add" class="btn btn-sub">費用を追加</button>
+      <button type="button" id="budget-add" class="btn">費用を追加</button>
       <div id="budget-summary" class="summary" aria-live="polite"></div>
       <p class="small" id="es-wrap"></p>
     </details>
@@ -228,7 +228,7 @@
       <summary>自由ページ: <span class="opt-state"></span></summary>
       <p class="hint">見出しと本文を、しおりの 1 ページとして印刷します。</p>
       <div id="free-pages"></div>
-      <button type="button" id="free-add" class="btn btn-sub">ページを足す</button>
+      <button type="button" id="free-add" class="btn">ページを足す</button>
     </details>
 
     <!-- 9. 共有・保存（SCREEN.md 1.2 の 7） -->
@@ -236,7 +236,7 @@
       <summary>共有・保存とバックアップ</summary>
       <p class="small">入力するたびに、この端末のブラウザに自動で保存します。しおりは 30 件まで持てます。</p>
       <label class="inline field"><input type="checkbox" id="share-contacts"> 宿の住所・電話番号と連絡先もリンクに入れる</label>
-      <p id="share-warn" class="warn-box" hidden>電話番号・住所がリンクに入ります。リンクを受け取った人は誰でも読めます。家族や同行者だけに送ってください。</p>
+      <p id="share-warn" class="notice" hidden>電話番号・住所がリンクに入ります。リンクを受け取った人は誰でも読めます。家族や同行者だけに送ってください。</p>
       <div class="btn-row">
         <button type="button" id="share" class="btn">共有リンクを作ってコピー</button>
       </div>
@@ -246,9 +246,9 @@
       <p class="small">共有リンクには、しおりの内容が URL の「#」以降に入ります（サーバーには送信されません）。表紙の写真は入りません。</p>
       <!-- 保存内容のファイルへの書き出し・読み込み（README「ツールを追加するとき」20） -->
       <div class="btn-row">
-        <button type="button" id="backup-export" class="btn btn-sub">ファイルに書き出す</button>
-        <button type="button" id="backup-import" class="btn btn-sub">ファイルから読み込む</button>
-        <button type="button" class="btn btn-sub" data-reset-storage="tabi-shiori_">保存した内容をすべて消す（初期状態に戻す）</button>
+        <button type="button" id="backup-export" class="btn">ファイルに書き出す</button>
+        <button type="button" id="backup-import" class="btn">ファイルから読み込む</button>
+        <button type="button" class="btn" data-reset-storage="tabi-shiori_">保存した内容をすべて消す（初期状態に戻す）</button>
       </div>
       <input type="file" id="backup-file" accept=".json,application/json" hidden>
       <p id="backup-msg" class="small" aria-live="polite"></p>

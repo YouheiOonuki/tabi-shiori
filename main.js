@@ -198,21 +198,21 @@
             '<span aria-hidden="true">分</span>' +
             '<span class="arrive" id="arr-' + id + '"></span>' +
           '</div>' +
-          '<p class="warn" id="warn-' + id + '" hidden></p>' +
+          '<p class="notice" id="warn-' + id + '" hidden></p>' +
           '<div class="item-tools">' +
             '<button type="button" class="mini" data-act="item-up" data-d="' + di + '" data-i="' + ii + '" aria-label="上へ"' + (ii === 0 ? ' disabled' : '') + '>↑</button>' +
             '<button type="button" class="mini" data-act="item-down" data-d="' + di + '" data-i="' + ii + '" aria-label="下へ"' + (ii === day.items.length - 1 ? ' disabled' : '') + '>↓</button>' +
             '<button type="button" class="mini" data-act="item-ins" data-d="' + di + '" data-i="' + ii + '">下に予定を挿入</button>' +
-            '<button type="button" class="mini danger" data-act="item-del" data-d="' + di + '" data-i="' + ii + '">削除</button>' +
+            '<button type="button" class="mini" data-act="item-del" data-d="' + di + '" data-i="' + ii + '">削除</button>' +
           '</div>' +
         '</li>';
       }).join('');
       return '<div class="day" id="day-' + di + '">' +
         '<div class="day-head"><h3>' + esc(dayTitle(t, di)) + '</h3>' +
-          (t.days.length > 1 ? '<button type="button" class="mini danger" data-act="day-del" data-d="' + di + '">この日を削除</button>' : '') +
+          (t.days.length > 1 ? '<button type="button" class="mini" data-act="day-del" data-d="' + di + '">この日を削除</button>' : '') +
         '</div>' +
         '<ol class="items">' + items + '</ol>' +
-        '<button type="button" class="btn btn-sub" data-act="item-add" data-d="' + di + '">予定を追加</button>' +
+        '<button type="button" class="btn" data-act="item-add" data-d="' + di + '">予定を追加</button>' +
         '<p class="total-line" id="day-total-' + di + '"></p>' +
       '</div>';
     }).join('');
@@ -250,7 +250,7 @@
         '<span class="visually-hidden">用意した：</span></label>' +
         '<label class="visually-hidden" for="pk' + i + '">持ち物</label>' +
         '<input type="text" id="pk' + i + '" data-p="packing.' + i + '.name" maxlength="40" value="' + esc(x.name) + '">' +
-        '<button type="button" class="mini danger" data-act="pack-del" data-i="' + i + '" aria-label="' + esc(x.name) + ' を削除">×</button></li>';
+        '<button type="button" class="mini" data-act="pack-del" data-i="' + i + '" aria-label="' + esc(x.name) + ' を削除">×</button></li>';
     }).join('');
     updateSummaries();
   }
@@ -267,7 +267,7 @@
         '</div>' +
         field('st' + i + 'a', '住所', '<input type="text" id="st' + i + 'a" data-p="' + b + 'addr" maxlength="120" value="' + esc(x.addr) + '">') +
         field('st' + i + 'm', 'メモ', '<textarea id="st' + i + 'm" data-p="' + b + 'memo" rows="1" maxlength="300" placeholder="例：朝食 7:00〜、駐車場あり">' + esc(x.memo) + '</textarea>') +
-        '<button type="button" class="mini danger" data-act="stay-del" data-i="' + i + '">この宿を削除</button>' +
+        '<button type="button" class="mini" data-act="stay-del" data-i="' + i + '">この宿を削除</button>' +
       '</div>';
     }).join('');
     growAll($('stays'));
@@ -282,7 +282,7 @@
         field('ct' + i + 't', '電話番号', '<input type="tel" id="ct' + i + 't" data-p="' + b + 'tel" maxlength="30" value="' + esc(x.tel) + '">') +
         '</div>' +
         field('ct' + i + 'm', 'メモ', '<input type="text" id="ct' + i + 'm" data-p="' + b + 'memo" maxlength="60" value="' + esc(x.memo) + '" placeholder="例：レンタカー会社、旅行保険">') +
-        '<button type="button" class="mini danger" data-act="contact-del" data-i="' + i + '">この連絡先を削除</button>' +
+        '<button type="button" class="mini" data-act="contact-del" data-i="' + i + '">この連絡先を削除</button>' +
       '</div>';
     }).join('');
   }
@@ -305,7 +305,7 @@
         '<div class="free-tools">' +
           '<button type="button" class="mini" data-act="free-up" data-i="' + i + '"' + (i === 0 ? ' disabled' : '') + '>上へ</button>' +
           '<button type="button" class="mini" data-act="free-down" data-i="' + i + '"' + (i === n - 1 ? ' disabled' : '') + '>下へ</button>' +
-          '<button type="button" class="mini danger" data-act="free-del" data-i="' + i + '">削除</button>' +
+          '<button type="button" class="mini" data-act="free-del" data-i="' + i + '">削除</button>' +
         '</div>' +
       '</div>';
     }).join('');
@@ -331,7 +331,7 @@
         field('bg' + i + 'n', '費用', '<input type="text" id="bg' + i + 'n" data-p="' + b + 'name" maxlength="40" value="' + esc(x.name) + '" placeholder="例：新幹線、宿">') +
         field('bg' + i + 'a', '金額（円）', '<input type="number" id="bg' + i + 'a" data-p="' + b + 'amount" data-type="int" min="0" step="1" inputmode="numeric" value="' + (x.amount || '') + '">') +
         field('bg' + i + 'p', '立て替えた人', '<select id="bg' + i + 'p" data-p="' + b + 'payer" data-type="int">' + opts(x.payer) + '</select>') +
-        '<button type="button" class="mini danger" data-act="budget-del" data-i="' + i + '" aria-label="この費用を削除">削除</button>' +
+        '<button type="button" class="mini" data-act="budget-del" data-i="' + i + '" aria-label="この費用を削除">削除</button>' +
       '</div>';
     }).join('');
     updateBudgetSummary();
