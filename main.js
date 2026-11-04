@@ -785,6 +785,7 @@
     root.className = 'paper ' + (mode === 'booklet' ? 'size-a5' : 'size-a4');
     var r = buildSheets(t, mode);
     root.innerHTML = r.html;
+    window.yzUsed?.();
     return r;
   }
 
@@ -823,6 +824,7 @@
       return '<figure class="pv"><div class="pv-sheet paper ' + (mode === 'booklet' ? 'size-a5' : 'size-a4') + '">' + s.outerHTML + '</div><figcaption>' + esc(label) + '</figcaption></figure>';
     }).join('');
     previewScale();
+    window.yzUsed?.();
   }
   addEventListener('resize', function () { if (!$('preview').hidden) previewScale(); });
 
