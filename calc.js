@@ -233,6 +233,7 @@
    * 1 日の移動の集計。items[i].move / min は「この場所から次の場所へ」の移動
    * @returns {{total:number, legs:number, rows:Array<{arrive:string, late:boolean, lateBy:number}>}}
    *   arrive: 時刻と移動時間から出した、次の場所に着く時刻の目安（出せなければ ''）
+   *   at:     同じ目安を、その日の 0 時からの分で（出せなければ null。24 時を超えることがある）
    *   late:   次の予定の時刻に間に合わない（次の予定に時刻があるときだけ判定）
    */
   function daySummary(items) {
@@ -241,11 +242,12 @@
     var rows = items.map(function (it, i) {
       var min = Number(it.min) || 0;
       if (min > 0) { total += min; legs++; }
-      var r = { arrive: '', late: false, lateBy: 0 };
+      var r = { arrive: '', at: null, late: false, lateBy: 0 };
       var t = toMin(it.time);
       if (t !== null && min > 0) {
         var arrive = t + min;
         r.arrive = clock(arrive);
+        r.at = arrive;
         var next = items[i + 1];
         var nt = next ? toMin(next.time) : null;
         if (nt !== null && arrive > nt) { r.late = true; r.lateBy = arrive - nt; }
@@ -253,6 +255,48 @@
       return r;
     });
     return { total: total, legs: legs, rows: rows };
+  }
+
+  /**
+   * 1 日の時刻の帯の位置（画面の行程の上の SVG）。到着の目安は daySummary から取る
+   * 横の範囲: その日の最初の時刻 〜 最後の予定か最後の到着の遅いほう（24 時で切る）。幅が 60 分に満たなければ 60 分に広げる
+   * 時刻の無い予定は置かない。時刻のある予定が 1 つ以下なら null
+   * @returns {null | {from:number, to:number, clipped:boolean, ticks:number[],
+   *   marks:Array<{i:number, n:number, x:number}>, moves:Array<{i:number, x1:number, x2:number, clipped:boolean}>,
+   *   overlaps:Array<{i:number, x1:number, x2:number}>}}
+   *   x・x1・x2 は帯の左端 0 〜 右端 1 の位置。i は予定の番号（0 始まり）、n は並びの番号（1 始まり）
+   *   overlaps: 到着の目安が次の予定の時刻より遅い所（次の予定の時刻 〜 到着の目安）
+   */
+  function dayBand(items) {
+    items = items || [];
+    var END = 24 * 60;
+    var s = daySummary(items);
+    var times = [];
+    items.forEach(function (it, i) { var t = toMin(it.time); if (t !== null) times.push({ i: i, t: t }); });
+    if (times.length < 2) return null;
+    var from = Math.min.apply(null, times.map(function (x) { return x.t; }));
+    var last = Math.max.apply(null, times.map(function (x) { return x.t; }));
+    var clipped = false;
+    s.rows.forEach(function (r) {
+      if (r.at === null) return;
+      if (r.at > END) clipped = true;
+      last = Math.max(last, Math.min(r.at, END));
+    });
+    var to = last;
+    if (to - from < 60) { to = Math.min(END, from + 60); from = Math.min(from, to - 60); }
+    var span = to - from;
+    var x = function (m) { return (Math.min(Math.max(m, from), to) - from) / span; };
+    var ticks = [];
+    for (var h = Math.ceil(from / 60) * 60; h <= to; h += 60) ticks.push(h);
+    var marks = times.map(function (m) { return { i: m.i, n: m.i + 1, x: x(m.t) }; });
+    var moves = [], overlaps = [];
+    s.rows.forEach(function (r, i) {
+      if (r.at === null) return;
+      var start = toMin(items[i].time);
+      moves.push({ i: i, x1: x(start), x2: x(r.at), clipped: r.at > END });
+      if (r.late) overlaps.push({ i: i, x1: x(r.at - r.lateBy), x2: x(r.at) });
+    });
+    return { from: from, to: to, clipped: clipped, ticks: ticks, marks: marks, moves: moves, overlaps: overlaps };
   }
 
   /** 旅行全体の移動時間の合計（分） */
@@ -563,7 +607,7 @@
     CREDIT: CREDIT, COVERS: COVERS, MOVES: MOVES, LIMITS: LIMITS, SHARE_MAX: SHARE_MAX, BACKUP_MAX_BYTES: BACKUP_MAX_BYTES,
     emptyTrip: emptyTrip, normalizeTrip: normalizeTrip, normalizeStore: normalizeStore,
     isDate: isDate, isTime: isTime, tripDays: tripDays, nightsLabel: nightsLabel, dateJa: dateJa, dayDate: dayDate, rangeJa: rangeJa,
-    formatMin: formatMin, daySummary: daySummary, tripMoveTotal: tripMoveTotal,
+    formatMin: formatMin, daySummary: daySummary, dayBand: dayBand, tripMoveTotal: tripMoveTotal,
     splitEven: splitEven, settle: settle, toEasySplit: toEasySplit, easySplitUrl: easySplitUrl,
     encodeShare: encodeShare, decodeShare: decodeShare, packTrip: packTrip, unpackTrip: unpackTrip,
     FREE_PLACES: FREE_PLACES, freeOrder: freeOrder, wrapText: wrapText,

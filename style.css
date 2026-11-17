@@ -175,6 +175,21 @@ label.inline input { width: 1.1rem; height: 1.1rem; flex: none; accent-color: va
 /* 行程 */
 .day { border-top: 1px solid var(--border); padding-top: var(--sp-3); margin-bottom: var(--sp-3); }   /* 面の中なので箱にせず区切りの線（面の入れ子をしない） */
 .day-head { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-2); margin-bottom: var(--sp-2); }
+.band { padding: 0 24px; margin-bottom: var(--sp-3); }   /* 左右の 24px は、端の印の押せる所（44px 角）の半分 */
+.band-svg { display: block; overflow: visible; }
+.band-axis, .band-tick { stroke: var(--muted); stroke-width: 1; }
+.band-hour { fill: var(--muted); font-size: 12px; }
+.band-move { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 1; }
+.band-late { stroke: var(--error, #ce0000); stroke-width: 2; }
+.band-late-bg { fill: var(--card); }
+.band-late-line { stroke: var(--error, #ce0000); stroke-width: 3; }
+.band-clip { fill: var(--text); }
+.band-mark { cursor: pointer; }
+.band-hit { fill: transparent; }
+.band-stem { stroke: var(--muted); stroke-width: 1; }
+.band-mark circle { fill: var(--card); stroke: var(--accent); stroke-width: 2; }
+.band-mark text { fill: var(--text); font-size: 13px; font-weight: 700; }
+@media (hover: hover) { .band-mark:hover circle { fill: var(--accent-soft); } }
 .items { list-style: none; margin-bottom: var(--sp-3); }
 .item { border-bottom: 1px solid var(--border); padding-bottom: var(--sp-3); margin-bottom: var(--sp-3); }
 .item:last-child { border-bottom: none; padding-bottom: 0; margin-bottom: 0; }

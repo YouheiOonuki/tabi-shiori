@@ -111,9 +111,9 @@ test('daySummary: 移動時間の合計・到着の目安・間に合うか', ()
   const s = C.daySummary(t.days[0].items);
   assert.equal(s.total, 165);
   assert.equal(s.legs, 2);
-  assert.deepEqual(s.rows[0], { arrive: '10:15', late: false, lateBy: 0 });   // 8:00 + 2:15 = 10:15 ≤ 10:30
-  assert.deepEqual(s.rows[1], { arrive: '11:00', late: false, lateBy: 0 });   // ちょうど間に合う
-  assert.deepEqual(s.rows[2], { arrive: '', late: false, lateBy: 0 });
+  assert.deepEqual(s.rows[0], { arrive: '10:15', at: 615, late: false, lateBy: 0 });   // 8:00 + 2:15 = 10:15 ≤ 10:30
+  assert.deepEqual(s.rows[1], { arrive: '11:00', at: 660, late: false, lateBy: 0 });   // ちょうど間に合う
+  assert.deepEqual(s.rows[2], { arrive: '', at: null, late: false, lateBy: 0 });
   assert.equal(C.tripMoveTotal(t), 165);
 });
 
