@@ -211,6 +211,7 @@
         '<div class="day-head"><h3>' + esc(dayTitle(t, di)) + '</h3>' +
           (t.days.length > 1 ? '<button type="button" class="mini" data-act="day-del" data-d="' + di + '">この日を削除</button>' : '') +
         '</div>' +
+        '<div class="band" id="band-' + di + '" hidden></div>' +
         '<ol class="items">' + items + '</ol>' +
         '<button type="button" class="btn" data-act="item-add" data-d="' + di + '">予定を追加</button>' +
         '<p class="total-line" id="day-total-' + di + '"></p>' +
@@ -237,6 +238,45 @@
     });
     var el = $('day-total-' + di);
     if (el) el.textContent = s.total ? 'この日の移動 ' + C.formatMin(s.total) + '（' + s.legs + ' 回）' : '';
+    renderBand(di, el && el.textContent ? el.textContent : dayTitle(t, di));
+  }
+
+  // 1 日の時刻の帯（SVG）。位置は Calc.dayBand。横は % で置くので、幅が変わっても描き直さない
+  // 印は 44px 角の押せる所を持ち、押すとその予定の「場所・予定」の欄へ移る（キーボードでは行の側を使う）
+  function renderBand(di, label) {
+    var box = $('band-' + di);
+    if (!box) return;
+    var b = C.dayBand(cur().days[di].items);
+    box.hidden = !b;
+    if (!b) { box.innerHTML = ''; return; }
+    var pc = function (v) { return (v * 100).toFixed(3) + '%'; };
+    var hatch = 'band-hatch-' + di;
+    var svg = '<svg class="band-svg" width="100%" height="88" role="img" aria-label="' + esc(label) + '">' +
+      '<defs><pattern id="' + hatch + '" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">' +
+        '<rect class="band-late-bg" width="6" height="6"></rect><line class="band-late-line" x1="0" y1="0" x2="0" y2="6"></line></pattern></defs>' +
+      '<line class="band-axis" x1="0" x2="100%" y1="22" y2="22"></line>';
+    b.ticks.forEach(function (m) {
+      var x = pc((m - b.from) / (b.to - b.from));
+      svg += '<line class="band-tick" x1="' + x + '" x2="' + x + '" y1="17" y2="27"></line>' +
+        '<text class="band-hour" x="' + x + '" y="12" text-anchor="middle">' + Math.floor(m / 60) + '</text>';
+    });
+    b.moves.forEach(function (mv) {
+      svg += '<rect class="band-move" x="' + pc(mv.x1) + '" width="' + pc(Math.max(0, mv.x2 - mv.x1)) + '" y="30" height="12"></rect>';
+    });
+    b.overlaps.forEach(function (o) {
+      svg += '<rect class="band-late" x="' + pc(o.x1) + '" width="' + pc(Math.max(0, o.x2 - o.x1)) + '" y="28" height="16" fill="url(#' + hatch + ')"></rect>';
+    });
+    if (b.clipped) svg += '<svg x="100%" y="36" overflow="visible"><path class="band-clip" d="M2 -7 L12 0 L2 7 Z"></path></svg>';
+    b.marks.forEach(function (m) {
+      svg += '<svg x="' + pc(m.x) + '" y="66" overflow="visible">' +
+        '<g class="band-mark" data-act="band-go" data-d="' + di + '" data-i="' + m.i + '">' +
+          '<rect class="band-hit" x="-22" y="-22" width="44" height="44"></rect>' +
+          '<line class="band-stem" x1="0" x2="0" y1="-24" y2="-13"></line>' +
+          '<circle r="12"></circle>' +
+          '<text y="4.5" text-anchor="middle">' + m.n + '</text>' +
+        '</g></svg>';
+    });
+    box.innerHTML = svg + '</svg>';
   }
   function updateMoveTotal() {
     var m = C.tripMoveTotal(cur());
@@ -479,6 +519,10 @@
         if (t.days[di].items.length && !confirm((di + 1) + '日目の予定（' + t.days[di].items.length + ' 件）を削除しますか？')) return;
         t.days.splice(di, 1); renderDays(); renderNights();
         break;
+      case 'band-go':
+        var go = $('d' + di + 'i' + ii + 'p');
+        if (go) { go.scrollIntoView({ block: 'center' }); go.focus({ preventScroll: true }); }
+        return;
       case 'pack-del': t.packing.splice(ii, 1); renderPacking(); break;
       case 'stay-del':
         if (t.stays[ii].name && !confirm('「' + t.stays[ii].name + '」を削除しますか？')) return;
