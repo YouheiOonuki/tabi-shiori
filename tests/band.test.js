@@ -82,3 +82,26 @@ test('dayBand: 到着の目安は daySummary と同じ', () => {
   const b = C.dayBand(items), s = C.daySummary(items);
   b.moves.forEach((mv) => near(b.from + mv.x2 * (b.to - b.from), s.rows[mv.i].at));
 });
+
+test('bandLabelStep: 字の間が 24px 以上になる最小の 1・2・3・4・6 時間（Q-396）', () => {
+  // 390 幅の帯はおよそ 275px（Q-396 で測った値: 16 時間の日で 1 時間 17.2px）
+  assert.equal(C.bandLabelStep(275, 600, 840), 1);    // 4 時間: 68.8px
+  assert.equal(C.bandLabelStep(275, 540, 1020), 1);   // 8 時間: 34.4px
+  assert.equal(C.bandLabelStep(275, 360, 1320), 2);   // 16 時間: 17.2px → 2 時間おき 34.4px
+  assert.equal(C.bandLabelStep(275, 0, 1440), 3);     // 24 時間: 11.5px → 3 時間おき 34.4px
+  assert.equal(C.bandLabelStep(560, 0, 1440), 2);     // 1,280 幅でも 24 時間なら 23.3px → 2 時間おき
+  assert.equal(C.bandLabelStep(60, 0, 1440), 6);      // 6 時間おきでも狭ければ 6
+  for (const px of [100, 200, 275, 560, 900]) for (const h of [4, 8, 16, 24]) {
+    const st = C.bandLabelStep(px, 0, h * 60);
+    if (st < 6) assert.ok(st * px / h >= 24, px + 'px ' + h + ' 時間');
+  }
+});
+
+test('帯の印はリンク（href はその予定の「場所・予定」の欄）。Tab で止まり、押すと欄へ（Q-396）', () => {
+  const src = require('node:fs').readFileSync(require('node:path').join(__dirname, '..', 'main.js'), 'utf8');
+  assert.match(src, /<a class="band-mark" href="#d' \+ di \+ 'i' \+ m\.i \+ 'p"/);
+  assert.match(src, /id="' \+ id \+ 'p" data-p="' \+ base \+ 'place"/);   // 欄の id と同じ形
+  assert.match(src, /case 'band-go':\s*e\.preventDefault\(\);/);
+  assert.doesNotMatch(src, /class="band-svg"[^>]*role="img"/);   // img の中のリンクは読み上げに出ないので group
+  assert.match(src, /class="band-svg"[^']*role="group" aria-label="' \+ esc\(label\)/);
+});
