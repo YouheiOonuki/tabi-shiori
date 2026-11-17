@@ -299,6 +299,16 @@
     return { from: from, to: to, clipped: clipped, ticks: ticks, marks: marks, moves: moves, overlaps: overlaps };
   }
 
+  /**
+   * 帯の目盛りの字を何時間おきに出すか。字の間（中心どうし）が 24px 以上になる最小の 1・2・3・4・6 時間（6 でも狭ければ 6）
+   * @param {number} px 帯の幅（px）  @param {number} from @param {number} to 帯の範囲（分）
+   */
+  var BAND_STEPS = [1, 2, 3, 4, 6];
+  function bandLabelStep(px, from, to) {
+    var per = px / ((to - from) / 60);
+    return BAND_STEPS.filter(function (n) { return n * per >= 24; })[0] || BAND_STEPS[BAND_STEPS.length - 1];
+  }
+
   /** 旅行全体の移動時間の合計（分） */
   function tripMoveTotal(trip) {
     return (trip.days || []).reduce(function (s, d) { return s + daySummary(d.items).total; }, 0);
@@ -607,7 +617,7 @@
     CREDIT: CREDIT, COVERS: COVERS, MOVES: MOVES, LIMITS: LIMITS, SHARE_MAX: SHARE_MAX, BACKUP_MAX_BYTES: BACKUP_MAX_BYTES,
     emptyTrip: emptyTrip, normalizeTrip: normalizeTrip, normalizeStore: normalizeStore,
     isDate: isDate, isTime: isTime, tripDays: tripDays, nightsLabel: nightsLabel, dateJa: dateJa, dayDate: dayDate, rangeJa: rangeJa,
-    formatMin: formatMin, daySummary: daySummary, dayBand: dayBand, tripMoveTotal: tripMoveTotal,
+    formatMin: formatMin, daySummary: daySummary, dayBand: dayBand, bandLabelStep: bandLabelStep, tripMoveTotal: tripMoveTotal,
     splitEven: splitEven, settle: settle, toEasySplit: toEasySplit, easySplitUrl: easySplitUrl,
     encodeShare: encodeShare, decodeShare: decodeShare, packTrip: packTrip, unpackTrip: unpackTrip,
     FREE_PLACES: FREE_PLACES, freeOrder: freeOrder, wrapText: wrapText,

@@ -242,7 +242,8 @@
   }
 
   // 1 日の時刻の帯（SVG）。位置は Calc.dayBand。横は % で置くので、幅が変わっても描き直さない
-  // 印は 44px 角の押せる所を持ち、押すとその予定の「場所・予定」の欄へ移る（キーボードでは行の側を使う）
+  // 印は 44px 角の押せる所を持つリンク（href はその予定の「場所・予定」の欄）。押す・Tab で止めて Enter で、その欄へ移る
+  // 目盛りの字は、幅に合わせて間引く（thinBand。線は全部残す）
   function renderBand(di, label) {
     var box = $('band-' + di);
     if (!box) return;
@@ -251,14 +252,14 @@
     if (!b) { box.innerHTML = ''; return; }
     var pc = function (v) { return (v * 100).toFixed(3) + '%'; };
     var hatch = 'band-hatch-' + di;
-    var svg = '<svg class="band-svg" width="100%" height="88" role="img" aria-label="' + esc(label) + '">' +
+    var svg = '<svg class="band-svg" width="100%" height="88" role="group" aria-label="' + esc(label) + '" data-from="' + b.from + '" data-to="' + b.to + '">' +
       '<defs><pattern id="' + hatch + '" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">' +
         '<rect class="band-late-bg" width="6" height="6"></rect><line class="band-late-line" x1="0" y1="0" x2="0" y2="6"></line></pattern></defs>' +
       '<line class="band-axis" x1="0" x2="100%" y1="22" y2="22"></line>';
     b.ticks.forEach(function (m) {
       var x = pc((m - b.from) / (b.to - b.from));
       svg += '<line class="band-tick" x1="' + x + '" x2="' + x + '" y1="17" y2="27"></line>' +
-        '<text class="band-hour" x="' + x + '" y="12" text-anchor="middle">' + Math.floor(m / 60) + '</text>';
+        '<text class="band-hour" data-h="' + Math.floor(m / 60) + '" x="' + x + '" y="12" text-anchor="middle">' + Math.floor(m / 60) + '</text>';
     });
     b.moves.forEach(function (mv) {
       svg += '<rect class="band-move" x="' + pc(mv.x1) + '" width="' + pc(Math.max(0, mv.x2 - mv.x1)) + '" y="30" height="12"></rect>';
@@ -269,15 +270,28 @@
     if (b.clipped) svg += '<svg x="100%" y="36" overflow="visible"><path class="band-clip" d="M2 -7 L12 0 L2 7 Z"></path></svg>';
     b.marks.forEach(function (m) {
       svg += '<svg x="' + pc(m.x) + '" y="66" overflow="visible">' +
-        '<g class="band-mark" data-act="band-go" data-d="' + di + '" data-i="' + m.i + '">' +
+        '<a class="band-mark" href="#d' + di + 'i' + m.i + 'p" data-act="band-go" data-d="' + di + '" data-i="' + m.i + '">' +
           '<rect class="band-hit" x="-22" y="-22" width="44" height="44"></rect>' +
           '<line class="band-stem" x1="0" x2="0" y1="-24" y2="-13"></line>' +
           '<circle r="12"></circle>' +
           '<text y="4.5" text-anchor="middle">' + m.n + '</text>' +
-        '</g></svg>';
+        '</a></svg>';
     });
     box.innerHTML = svg + '</svg>';
+    thinBand(box);
   }
+  // 目盛りの字の間が 24px 未満になるときは、2・3・4・6 時間おきに字を出す（その時刻が割り切れる字だけ。何時間おきかは Calc.bandLabelStep）
+  function thinBand(box) {
+    var svg = box.querySelector('.band-svg');
+    if (!svg) return;
+    var w = svg.getBoundingClientRect().width;
+    if (!w) return;
+    var step = C.bandLabelStep(w, Number(svg.getAttribute('data-from')), Number(svg.getAttribute('data-to')));
+    Array.prototype.forEach.call(svg.querySelectorAll('.band-hour'), function (t) {
+      t.classList.toggle('band-hour-off', Number(t.getAttribute('data-h')) % step !== 0);
+    });
+  }
+  addEventListener('resize', function () { Array.prototype.forEach.call(document.querySelectorAll('.band'), thinBand); });
   function updateMoveTotal() {
     var m = C.tripMoveTotal(cur());
     $('move-total').textContent = m ? '旅行全体の移動 ' + C.formatMin(m) : '';
@@ -520,6 +534,7 @@
         t.days.splice(di, 1); renderDays(); renderNights();
         break;
       case 'band-go':
+        e.preventDefault();
         var go = $('d' + di + 'i' + ii + 'p');
         if (go) { go.scrollIntoView({ block: 'center' }); go.focus({ preventScroll: true }); }
         return;

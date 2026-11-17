@@ -179,6 +179,7 @@ label.inline input { width: 1.1rem; height: 1.1rem; flex: none; accent-color: va
 .band-svg { display: block; overflow: visible; }
 .band-axis, .band-tick { stroke: var(--muted); stroke-width: 1; }
 .band-hour { fill: var(--muted); font-size: 12px; }
+.band-hour-off { display: none; }
 .band-move { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 1; }
 .band-late { stroke: var(--error, #ce0000); stroke-width: 2; }
 .band-late-bg { fill: var(--card); }
