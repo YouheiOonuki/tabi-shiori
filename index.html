@@ -146,8 +146,10 @@
       <h2 id="h-print">印刷・PDF</h2>
       <fieldset class="field">
         <legend>用紙</legend>
-        <label class="inline"><input type="radio" name="mode" value="a4" checked> A4 縦（そのまま綴じる）</label>
-        <label class="inline"><input type="radio" name="mode" value="booklet"> A5 冊子（A4 横に 2 ページずつ・折って冊子）</label>
+        <div class="check-grid">
+          <label class="inline"><input type="radio" name="mode" value="a4" checked> A4 縦（そのまま綴じる）</label>
+          <label class="inline"><input type="radio" name="mode" value="booklet"> A5 冊子（A4 横に 2 ページずつ・折って冊子）</label>
+        </div>
       </fieldset>
       <div class="btn-row">
         <button type="button" id="print" class="btn btn-primary">印刷する・PDF に保存</button>
@@ -172,7 +174,7 @@
       <details class="rels" id="opt-howto">
         <summary>印刷の画面で選ぶもの: <span class="opt-state"></span></summary>
         <p class="small" id="print-help"></p>
-        <p class="small"><a href="../print-help.html">スマホで印刷するには →</a></p>
+        <p class="small link-row"><a href="../print-help.html">スマホで印刷するには →</a></p>
       </details>
     </section>
 
@@ -272,7 +274,7 @@
     </details>
     <!-- /about-tool -->
 
-    <p class="small center"><a href="./guide.html">使い方・印刷のコツ・よくある質問</a></p>
+    <p class="small center link-row"><a href="./guide.html">使い方・印刷のコツ・よくある質問</a></p>
 
   </main>
 

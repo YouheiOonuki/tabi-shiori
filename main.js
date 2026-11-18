@@ -317,9 +317,10 @@
   }
   var bandDrag = null;      // { id, di, i, x0, t0, per, moved, box }
   var bandNoClick = false;  // 引いた後の click では飛ばない
+  var bandTap = null;       // pointerdown で取った印（押して飛ぶ click もこの印の欄へ）
   function bandOf(el) { return el && el.closest ? el.closest('.band-mark') : null; }
   // 押した点 (x, y) で取る印（Q-516）。押せる所（.band-hit）がその点を含む印のうち、中心がいちばん近いもの（決め方は Calc.bandNearest）
-  // 描く順（上に描かれた印）では決めない。引く時も、押して飛ぶ時も、これで決める
+  // 描く順（上に描かれた印）では決めない。引く時も、押して飛ぶ時も、フォーカスを置く印も、これで決める
   function bandPick(mk, x, y) {
     var svg = mk.closest('.band-svg'), di = Number(mk.getAttribute('data-d')), items = cur().days[di].items, cand = [];
     Array.prototype.forEach.call(svg.querySelectorAll('.band-mark'), function (a) {
@@ -586,7 +587,9 @@
       case 'band-go':
         e.preventDefault();
         if (bandNoClick) { bandNoClick = false; return; }
-        if (e.detail > 0) ii = Number(bandPick(b, e.clientX, e.clientY).getAttribute('data-i'));   // 押した時は近い方の印（Enter は止まっている印）
+        // 押した時は pointerdown で取った印（click の座標で取り直すと、中心の差が 1px ほどの組で別の印になる。Q-553）。Enter は止まっている印
+        if (e.detail > 0) ii = Number((bandTap && bandTap.isConnected ? bandTap : bandPick(b, e.clientX, e.clientY)).getAttribute('data-i'));
+        bandTap = null;
         var go = $('d' + di + 'i' + ii + 'p');
         if (go) { go.scrollIntoView({ block: 'center' }); go.focus({ preventScroll: true }); }
         return;
@@ -629,10 +632,14 @@
   });
   // 引く: BAND_MOVE.tap px 以上動いたら引いたことにして、帯の箱で指を捕まえる（それまでは押しただけ。離すと click で飛ぶ）
   // 引く印は、押した点に中心がいちばん近い印（bandPick）。時刻は BAND_MOVE.step の目に丸める（Calc.bandDragTo）
+  // フォーカスも取った印へ（Q-553）。押した点の上に描かれた印へは移さない（mousedown の既定を止める）。押して飛ぶ時は band-go が欄へ移す
+  main.addEventListener('mousedown', function (e) { if (bandOf(e.target)) e.preventDefault(); });
   main.addEventListener('pointerdown', function (e) {
     var mk = bandOf(e.target);
     if (!mk || !e.isPrimary || e.button !== 0) return;
     mk = bandPick(mk, e.clientX, e.clientY);
+    mk.focus({ preventScroll: true });
+    bandTap = mk;
     bandNoClick = false;
     var di = Number(mk.getAttribute('data-d')), i = Number(mk.getAttribute('data-i'));
     var items = cur().days[di].items;

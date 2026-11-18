@@ -147,6 +147,8 @@ fieldset.field { border: none; }
 fieldset.field legend { font-weight: 700; margin-bottom: var(--sp-1); }
 label.inline { display: flex; align-items: center; gap: var(--sp-2); min-height: var(--tap); }
 label.inline input { width: 1.1rem; height: 1.1rem; flex: none; accent-color: var(--accent); }
+/* 使い方へのリンクだけの行（Q-553。箱を名指しする） */
+p.link-row > a:only-child { display: inline-flex; align-items: center; min-height: var(--tap); }
 .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 var(--sp-3); }
 .inline-row { display: flex; gap: var(--sp-2); align-items: center; }
 .inline-row > input, .inline-row > select { flex: 1; }
@@ -197,7 +199,7 @@ label.inline input { width: 1.1rem; height: 1.1rem; flex: none; accent-color: va
 .item-row { display: flex; gap: var(--sp-2); align-items: center; margin-bottom: var(--sp-2); }
 .item-row input[type="time"] { width: 7.4rem; flex: none; }
 .item-row input[type="text"] { flex: 1; }
-.map-link { display: inline-flex; align-items: center; min-height: var(--tap); flex: none; padding: 0 var(--sp-1); }
+.map-link { display: inline-flex; align-items: center; justify-content: center; min-height: var(--tap); min-width: var(--tap); flex: none; padding: 0 var(--sp-1); }
 .move-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2); margin-top: var(--sp-2); }
 .move-row select { width: auto; flex: 0 1 7.5rem; }
 .move-row input.num-min { width: 5.2rem; flex: none; }
@@ -210,7 +212,7 @@ label.inline input { width: 1.1rem; height: 1.1rem; flex: none; accent-color: va
 .check-list { list-style: none; margin-bottom: var(--sp-3); }
 .check-list li { display: flex; align-items: center; gap: var(--sp-2); margin-bottom: var(--sp-2); }
 .check-list li input[type="text"] { flex: 1; }
-.check-list label.inline { margin: 0; }
+.check-list label.inline { margin: 0; min-width: var(--tap); justify-content: center; }   /* 字の無いチェックだけの label も幅 44px（Q-553） */
 .check-list input[type="checkbox"] { width: 1.3rem; height: 1.3rem; }
 .check-grid { display: grid; grid-template-columns: 1fr; gap: var(--sp-1); }
 .entry { border-top: 1px solid var(--border); padding-top: var(--sp-3); margin-bottom: var(--sp-3); }
@@ -240,6 +242,9 @@ details.rels > summary { display: block; list-style: none; }
 details.rels > summary::-webkit-details-marker { display: none; }
 details.rels > summary::before { content: '▸'; color: var(--muted); margin-right: var(--sp-2); }
 details.rels[open] > summary::before { content: '▾'; }
+/* 並んだ折りたたみどうし・開いた summary と中身の間は 8px（Q-553） */
+details.rels + details.rels { margin-top: var(--sp-2); }
+details.rels[open] > summary { margin-bottom: var(--sp-2); }
 .opt-state { color: var(--text); font-weight: 400; }
 #print { min-width: 10rem; }
 
