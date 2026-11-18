@@ -261,3 +261,14 @@ test('main.js の押す・引くは bandPick（Calc.bandNearest）で印を決�
   assert.match(src, /mk = bandPick\(mk, e\.clientX, e\.clientY\)/);   // 引く
   assert.match(src, /case 'band-go':[\s\S]*?bandPick\(b, e\.clientX, e\.clientY\)/);   // 押して飛ぶ
 });
+
+test('重なった印を押した後のフォーカスは取られた印（引く時は印、押して飛ぶ時はその印の欄。上に描かれた印へは移さない。Q-553）', () => {
+  const src = require('node:fs').readFileSync(require('node:path').join(__dirname, '..', 'main.js'), 'utf8');
+  // 引く: pointerdown で bandPick の印へフォーカスを置き、mousedown の既定（押した点の上の印へのフォーカス）を止める
+  assert.match(src, /addEventListener\('pointerdown'[\s\S]*?mk = bandPick\(mk, e\.clientX, e\.clientY\);\s*mk\.focus\(\{ preventScroll: true \}\);\s*bandTap = mk;/);
+  assert.match(src, /addEventListener\('mousedown', function \(e\) \{ if \(bandOf\(e\.target\)\) e\.preventDefault\(\); \}\)/);
+  // 押して飛ぶ: pointerdown で取った印（無ければ click の点で bandPick）の番号の欄へ。click の座標で取り直さない
+  assert.match(src, /case 'band-go':[\s\S]*?ii = Number\(\(bandTap && bandTap\.isConnected \? bandTap : bandPick\(b, e\.clientX, e\.clientY\)\)\.getAttribute\('data-i'\)\)[\s\S]*?var go = \$\('d' \+ di \+ 'i' \+ ii \+ 'p'\);[\s\S]*?go\.focus\(/);
+  // 描き直しでは、フォーカスの在る印（＝取られた印）を作り直した後にも戻す
+  assert.match(src, /var keep = [^\n]*closest\('\.band-mark'\)\.getAttribute\('data-i'\)/);
+});
