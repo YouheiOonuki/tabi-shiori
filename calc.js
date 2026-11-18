@@ -14,6 +14,8 @@
   var DAY_MIN = 24 * 60;
   // 時刻の帯の幅の下限（分）。これより狭い日は広げる
   var BAND_MIN_SPAN = 60;
+  // 時刻の帯の印を動かす刻み（Q-510）。step: 引いた時と ← → の 1 歩（分）、big: Shift と ← →（分）、tap: これ未満の動きは押しただけ（px）
+  var BAND_MOVE = { step: 5, big: 30, tap: 8 };
   // 件数と長さの上限（保存・ファイル・共有リンクのどこから来ても同じにそろえる）
   // 範囲の数の芯。index.html の属性・使い方の文は直書きで、tests/ranges.test.js がここと突き合わせる。main.js はここから取る（Q-423）
   var LIMITS = {
@@ -271,8 +273,9 @@
    *   overlaps:Array<{i:number, x1:number, x2:number}>}}
    *   x・x1・x2 は帯の左端 0 〜 右端 1 の位置。i は予定の番号（0 始まり）、n は並びの番号（1 始まり）
    *   overlaps: 到着の目安が次の予定の時刻より遅い所（次の予定の時刻 〜 到着の目安）
+   * @param {{from:number, to:number}} [fix] 横の範囲をこの値にする（印を動かしている間は物差しを変えない。Q-510）
    */
-  function dayBand(items) {
+  function dayBand(items, fix) {
     items = items || [];
     var END = DAY_MIN;
     var s = daySummary(items);
@@ -289,6 +292,7 @@
     });
     var to = last;
     if (to - from < BAND_MIN_SPAN) { to = Math.min(END, from + BAND_MIN_SPAN); from = Math.min(from, to - BAND_MIN_SPAN); }
+    if (fix) { from = fix.from; to = fix.to; }
     var span = to - from;
     var x = function (m) { return (Math.min(Math.max(m, from), to) - from) / span; };
     var ticks = [];
@@ -302,6 +306,27 @@
       if (r.late) overlaps.push({ i: i, x1: x(r.at - r.lateBy), x2: x(r.at) });
     });
     return { from: from, to: to, clipped: clipped, ticks: ticks, marks: marks, moves: moves, overlaps: overlaps };
+  }
+
+  /**
+   * 帯の印を動かした先の時刻（Q-510）。i 番の予定の時刻を m 分（その日の 0 時から）にしたい時の、動ける範囲に収めた分
+   * 範囲: 0:00 〜 23:55（DAY_MIN − BAND_MOVE.step）と、時刻の在る前後の予定の時刻まで（同じ時刻までは行ける。並びの順を変えない）
+   * 今の時刻が前後の予定と逆の順に入っているときは、今の時刻より外へは動かさない（飛ばない）
+   * @returns {number|null} 時刻の無い予定は null
+   */
+  function bandMoveTo(items, i, m) {
+    items = items || [];
+    var now = toMin(items[i] && items[i].time);
+    if (now === null) return null;
+    var lo = 0, hi = DAY_MIN - BAND_MOVE.step, k, t;
+    for (k = i - 1; k >= 0; k--) { t = toMin(items[k].time); if (t !== null) { lo = Math.max(lo, t); break; } }
+    for (k = i + 1; k < items.length; k++) { t = toMin(items[k].time); if (t !== null) { hi = Math.min(hi, t); break; } }
+    lo = Math.min(lo, now); hi = Math.max(hi, now);
+    return Math.min(hi, Math.max(lo, Math.round(Number(m) || 0)));
+  }
+  /** 分（0〜1439）を時刻の欄の値「HH:MM」に */
+  function hhmm(m) {
+    return String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0');
   }
 
   /**
@@ -619,10 +644,10 @@
   var CREDIT = 'yorozu-craft.com/tabi-shiori/print/ で作成';
 
   var api = {
-    CREDIT: CREDIT, COVERS: COVERS, MOVES: MOVES, LIMITS: LIMITS, DAY_MIN: DAY_MIN, BAND_MIN_SPAN: BAND_MIN_SPAN, SHARE_MAX: SHARE_MAX, BACKUP_MAX_BYTES: BACKUP_MAX_BYTES,
+    CREDIT: CREDIT, COVERS: COVERS, MOVES: MOVES, LIMITS: LIMITS, DAY_MIN: DAY_MIN, BAND_MIN_SPAN: BAND_MIN_SPAN, BAND_MOVE: BAND_MOVE, SHARE_MAX: SHARE_MAX, BACKUP_MAX_BYTES: BACKUP_MAX_BYTES,
     emptyTrip: emptyTrip, normalizeTrip: normalizeTrip, normalizeStore: normalizeStore,
     isDate: isDate, isTime: isTime, tripDays: tripDays, nightsLabel: nightsLabel, dateJa: dateJa, dayDate: dayDate, rangeJa: rangeJa,
-    formatMin: formatMin, daySummary: daySummary, dayBand: dayBand, bandLabelStep: bandLabelStep, tripMoveTotal: tripMoveTotal,
+    toMin: toMin, formatMin: formatMin, daySummary: daySummary, dayBand: dayBand, bandMoveTo: bandMoveTo, hhmm: hhmm, bandLabelStep: bandLabelStep, tripMoveTotal: tripMoveTotal,
     splitEven: splitEven, settle: settle, toEasySplit: toEasySplit, easySplitUrl: easySplitUrl,
     encodeShare: encodeShare, decodeShare: decodeShare, packTrip: packTrip, unpackTrip: unpackTrip,
     FREE_PLACES: FREE_PLACES, freeOrder: freeOrder, wrapText: wrapText,
