@@ -175,7 +175,7 @@ label.inline input { width: 1.1rem; height: 1.1rem; flex: none; accent-color: va
 /* 行程 */
 .day { border-top: 1px solid var(--border); padding-top: var(--sp-3); margin-bottom: var(--sp-3); }   /* 面の中なので箱にせず区切りの線（面の入れ子をしない） */
 .day-head { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-2); margin-bottom: var(--sp-2); }
-.band { padding: 0 24px; margin-bottom: var(--sp-3); }   /* 左右の 24px は、端の印の押せる所（44px 角）の半分 */
+.band { padding: 0 24px; margin-bottom: var(--sp-3); touch-action: pan-y; -webkit-user-select: none; user-select: none; }   /* 左右の 24px は、端の印の押せる所（44px 角）の半分。横は印を引く所（Q-510）、縦のスクロールはそのまま */
 .band-svg { display: block; overflow: visible; }
 .band-axis, .band-tick { stroke: var(--muted); stroke-width: 1; }
 .band-hour { fill: var(--muted); font-size: 12px; }
@@ -185,7 +185,7 @@ label.inline input { width: 1.1rem; height: 1.1rem; flex: none; accent-color: va
 .band-late-bg { fill: var(--card); }
 .band-late-line { stroke: var(--error, #ce0000); stroke-width: 3; }
 .band-clip { fill: var(--text); }
-.band-mark { cursor: pointer; }
+.band-mark { cursor: ew-resize; }
 .band-hit { fill: transparent; }
 .band-stem { stroke: var(--muted); stroke-width: 1; }
 .band-mark circle { fill: var(--card); stroke: var(--accent); stroke-width: 2; }

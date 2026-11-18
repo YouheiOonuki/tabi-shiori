@@ -244,10 +244,15 @@
   // 1 日の時刻の帯（SVG）。位置は Calc.dayBand。横は % で置くので、幅が変わっても描き直さない
   // 印は 44px 角の押せる所を持つリンク（href はその予定の「場所・予定」の欄）。押す・Tab で止めて Enter で、その欄へ移る
   // 目盛りの字は、幅に合わせて間引く（thinBand。線は全部残す）
+  // 印を動かしている間（bandHold）は、横の範囲をその値のまま描く。描き直しで印が作り直されても、フォーカスは同じ予定の印に戻す
+  var bandHold = null;      // { di, from, to }
+  var bandRedraw = false;   // 描き直しで印を作り直している間（その間のフォーカスの出入りは「外れた」に数えない）
   function renderBand(di, label) {
     var box = $('band-' + di);
     if (!box) return;
-    var b = C.dayBand(cur().days[di].items);
+    var act = document.activeElement;
+    var keep = act && box.contains(act) && act.closest('.band-mark') ? act.closest('.band-mark').getAttribute('data-i') : null;
+    var b = C.dayBand(cur().days[di].items, bandHold && bandHold.di === di ? bandHold : null);
     box.hidden = !b;
     if (!b) { box.innerHTML = ''; return; }
     var pc = function (v) { return (v * 100).toFixed(3) + '%'; };
@@ -277,9 +282,42 @@
           '<text y="4.5" text-anchor="middle">' + m.n + '</text>' +
         '</a></svg>';
     });
+    bandRedraw = true;
     box.innerHTML = svg + '</svg>';
+    if (keep !== null) { var mk = box.querySelector('.band-mark[data-i="' + keep + '"]'); if (mk) mk.focus({ preventScroll: true }); }
+    bandRedraw = false;
     thinBand(box);
   }
+
+  // 帯の印を左右に動かして、その予定の時刻を変える（Q-510）。刻みは Calc.BAND_MOVE、動ける範囲は Calc.bandMoveTo
+  // 書き戻すのは時刻の欄と保存（入力と同じ道: 欄の値・updateDay・save）。並べ替えはしないので、印は同じ番号のまま
+  function bandSet(di, i, m) {
+    var items = cur().days[di].items;
+    var v = C.bandMoveTo(items, i, m);
+    if (v === null) return;
+    var t = C.hhmm(v);
+    if (t === items[i].time) return;
+    if (!bandHold || bandHold.di !== di) { var b0 = C.dayBand(items); bandHold = { di: di, from: b0.from, to: b0.to }; }
+    // 物差しを変えるのは、印が端に着いた時だけ（端を越える分だけ広げる）
+    if (v < bandHold.from) bandHold.from = v;
+    if (v > bandHold.to) bandHold.to = v;
+    items[i].time = t;
+    var f = $('d' + di + 'i' + i + 't');
+    if (f) f.value = t;
+    updateDay(di);
+    updateMoveTotal();
+    save();
+  }
+  // 指を離した時・フォーカスが外れた時: 横の範囲を今の予定から取り直して描く
+  function bandRelease() {
+    if (!bandHold) return;
+    var di = bandHold.di;
+    bandHold = null;
+    updateDay(di);
+  }
+  var bandDrag = null;      // { id, di, i, x0, t0, per, moved, box }
+  var bandNoClick = false;  // 引いた後の click では飛ばない
+  function bandOf(el) { return el && el.closest ? el.closest('.band-mark') : null; }
   // 目盛りの字の間が 24px 未満になるときは、2・3・4・6 時間おきに字を出す（その時刻が割り切れる字だけ。何時間おきかは Calc.bandLabelStep）
   function thinBand(box) {
     var svg = box.querySelector('.band-svg');
@@ -535,6 +573,7 @@
         break;
       case 'band-go':
         e.preventDefault();
+        if (bandNoClick) { bandNoClick = false; return; }
         var go = $('d' + di + 'i' + ii + 'p');
         if (go) { go.scrollIntoView({ block: 'center' }); go.focus({ preventScroll: true }); }
         return;
@@ -560,6 +599,57 @@
     }
     save();
   });
+
+  // 帯の印: ← → で BAND_MOVE.step 分、Shift と ← → で BAND_MOVE.big 分。Enter は今までどおりリンク（band-go）
+  main.addEventListener('keydown', function (e) {
+    var mk = bandOf(e.target);
+    if (!mk || (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') || e.altKey || e.ctrlKey || e.metaKey) return;
+    e.preventDefault();
+    var di = Number(mk.getAttribute('data-d')), i = Number(mk.getAttribute('data-i'));
+    var now = C.toMin(cur().days[di].items[i].time);
+    if (now === null) return;
+    bandSet(di, i, now + (e.key === 'ArrowLeft' ? -1 : 1) * (e.shiftKey ? C.BAND_MOVE.big : C.BAND_MOVE.step));
+  });
+  main.addEventListener('focusout', function (e) {
+    if (bandRedraw || !bandOf(e.target)) return;
+    setTimeout(function () { if (!bandDrag) bandRelease(); }, 0);
+  });
+  // 引く: BAND_MOVE.tap px 以上動いたら引いたことにして、帯の箱で指を捕まえる（それまでは押しただけ。離すと click で飛ぶ）
+  main.addEventListener('pointerdown', function (e) {
+    var mk = bandOf(e.target);
+    if (!mk || !e.isPrimary || e.button !== 0) return;
+    bandNoClick = false;
+    var di = Number(mk.getAttribute('data-d')), i = Number(mk.getAttribute('data-i'));
+    var items = cur().days[di].items;
+    var svg = mk.closest('.band-svg'), w = svg.getBoundingClientRect().width;
+    var b = bandHold && bandHold.di === di ? bandHold : C.dayBand(items);
+    if (!b || !w) return;
+    bandDrag = { id: e.pointerId, di: di, i: i, x0: e.clientX, t0: C.toMin(items[i].time), per: (b.to - b.from) / w, moved: false, box: $('band-' + di) };
+  });
+  main.addEventListener('pointermove', function (e) {
+    var d = bandDrag;
+    if (!d || e.pointerId !== d.id) return;
+    var dx = e.clientX - d.x0;
+    if (!d.moved) {
+      if (Math.abs(dx) < C.BAND_MOVE.tap) return;
+      d.moved = true;
+      try { d.box.setPointerCapture(d.id); } catch (err) { /* 捕まえられなくても動かせる */ }
+    }
+    var st = C.BAND_MOVE.step;
+    bandSet(d.di, d.i, d.t0 + Math.round(dx * d.per / st) * st);
+  });
+  function bandDragEnd(e) {
+    var d = bandDrag;
+    if (!d || e.pointerId !== d.id) return;
+    bandDrag = null;
+    if (!d.moved) return;
+    bandNoClick = true;
+    setTimeout(function () { bandNoClick = false; }, 0);   // 離した直後の click だけ
+    bandRelease();
+  }
+  main.addEventListener('pointerup', bandDragEnd);
+  main.addEventListener('pointercancel', bandDragEnd);
+  main.addEventListener('dragstart', function (e) { if (bandOf(e.target)) e.preventDefault(); });
 
   $('day-add').addEventListener('click', function () {
     var t = cur();

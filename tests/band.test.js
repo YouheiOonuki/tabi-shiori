@@ -105,3 +105,69 @@ test('帯の印はリンク（href はその予定の「場所・予定」の欄
   assert.doesNotMatch(src, /class="band-svg"[^>]*role="img"/);   // img の中のリンクは読み上げに出ないので group
   assert.match(src, /class="band-svg"[^']*role="group" aria-label="' \+ esc\(label\)/);
 });
+
+// ---- 帯の印を動かして時刻を変える（Q-510） ----
+
+test('BAND_MOVE は 5 分・30 分・8 px（QUEUE Q-510 の数。芯はここ 1 か所）', () => {
+  assert.deepEqual(C.BAND_MOVE, { step: 5, big: 30, tap: 8 });
+  assert.equal(C.BAND_MOVE.big % C.BAND_MOVE.step, 0);
+});
+
+test('main.js は刻みを Calc.BAND_MOVE から取る（5・30・8 を直書きしない）', () => {
+  const src = require('node:fs').readFileSync(require('node:path').join(__dirname, '..', 'main.js'), 'utf8');
+  assert.match(src, /C\.BAND_MOVE\.step/);
+  assert.match(src, /C\.BAND_MOVE\.big/);
+  assert.match(src, /C\.BAND_MOVE\.tap/);
+  const body = src.slice(src.indexOf('function bandSet'), src.indexOf("$('day-add')"));
+  assert.doesNotMatch(body.replace(/\/\/[^\n]*/g, ''), /[^\w.](5|30|8)\b(?!\s*px)/);
+});
+
+test('bandMoveTo: 前後の時刻の在る予定を越えない（同じ時刻までは行ける。時刻の無い予定は飛ばして見る）', () => {
+  const items = [{ time: '09:00' }, { time: '' }, { time: '10:00' }, { time: '11:30' }];
+  const T = (t) => C.toMin(t);
+  assert.equal(C.bandMoveTo(items, 2, T('10:05')), T('10:05'));
+  assert.equal(C.bandMoveTo(items, 2, T('08:00')), T('09:00'));   // 前の時刻の在る予定（0 番）まで
+  assert.equal(C.bandMoveTo(items, 2, T('12:00')), T('11:30'));   // 次の予定まで
+  assert.equal(C.bandMoveTo(items, 1, T('10:00')), null);         // 時刻の無い予定は動かせない
+});
+
+test('bandMoveTo: 0:00 と 23:55 で止まる', () => {
+  const items = [{ time: '00:10' }, { time: '23:50' }];
+  assert.equal(C.bandMoveTo(items, 0, -30), 0);
+  assert.equal(C.bandMoveTo(items, 1, 23 * 60 + 50 + 30), C.DAY_MIN - C.BAND_MOVE.step);
+  assert.equal(C.hhmm(C.bandMoveTo(items, 1, 9999)), '23:55');
+  assert.equal(C.hhmm(C.bandMoveTo(items, 0, -9999)), '00:00');
+});
+
+test('bandMoveTo: 前後と逆の順に入っている予定は、今の時刻から外へは動かさない（飛ばない）', () => {
+  const items = [{ time: '10:00' }, { time: '09:00' }, { time: '11:00' }];
+  assert.equal(C.bandMoveTo(items, 1, C.toMin('08:55')), C.toMin('09:00'));
+  assert.equal(C.bandMoveTo(items, 1, C.toMin('09:05')), C.toMin('09:05'));
+});
+
+test('hhmm は時刻の欄の値（toMin の逆）', () => {
+  for (const t of ['00:00', '07:05', '12:30', '23:55']) assert.equal(C.hhmm(C.toMin(t)), t);
+});
+
+test('印の位置 ＝ dayBand の位置 ＝ 欄の時刻（動かす前と後）', () => {
+  const items = [{ time: '08:00', min: 30 }, { time: '09:00', min: 20 }, { time: '10:00' }];
+  const check = () => {
+    const b = C.dayBand(items);
+    b.marks.forEach((m) => near(b.from + m.x * (b.to - b.from), C.toMin(items[m.i].time)));
+  };
+  check();
+  items[1].time = C.hhmm(C.bandMoveTo(items, 1, C.toMin(items[1].time) + 5 * C.BAND_MOVE.step));
+  assert.equal(items[1].time, '09:25');
+  check();
+});
+
+test('dayBand に範囲を渡すと、その範囲で描く（動かしている間は目盛りを変えない）', () => {
+  const items = [{ time: '08:00' }, { time: '09:00' }, { time: '10:00' }];
+  const b0 = C.dayBand(items);
+  items[0].time = '08:30';   // 範囲の左端を決めていた予定を動かす
+  const b1 = C.dayBand(items, { from: b0.from, to: b0.to });
+  assert.equal(b1.from, b0.from); assert.equal(b1.to, b0.to);
+  assert.deepEqual(b1.ticks, b0.ticks);
+  near(b1.marks[0].x, 30 / 120);
+  assert.notEqual(C.dayBand(items).from, b0.from);   // 渡さなければ取り直す
+});
