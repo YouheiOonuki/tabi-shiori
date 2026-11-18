@@ -10,11 +10,16 @@
   var COVERS = ['none', 'mountain', 'sea', 'city', 'train', 'onsen'];
   var MOVES = ['', '徒歩', '電車', '新幹線', 'バス', '車', '飛行機', '船', 'タクシー', '自転車', 'その他'];
 
+  // 1 日の分（24 時）。時刻の帯の右端と、移動の分の上限
+  var DAY_MIN = 24 * 60;
+  // 時刻の帯の幅の下限（分）。これより狭い日は広げる
+  var BAND_MIN_SPAN = 60;
   // 件数と長さの上限（保存・ファイル・共有リンクのどこから来ても同じにそろえる）
+  // 範囲の数の芯。index.html の属性・使い方の文は直書きで、tests/ranges.test.js がここと突き合わせる。main.js はここから取る（Q-423）
   var LIMITS = {
     trips: 30, members: 30, days: 30, items: 40, packing: 150, stays: 10, contacts: 20, budget: 50,
     title: 60, sub: 80, name: 40, place: 60, memo: 300, addr: 120, tel: 30, notes: 3000, image: 400000,
-    freePages: 20, freeTitle: 40, freeBody: 2000,
+    freePages: 20, freeTitle: 40, freeBody: 2000, moveMin: DAY_MIN, amount: 99999999,
   };
   // 自由ページを入れる場所（行程の前・後ろ）
   var FREE_PLACES = ['before', 'after'];
@@ -67,7 +72,7 @@
           place: line(it.place, LIMITS.place),
           memo: str(it.memo, LIMITS.memo),
           move: MOVES.indexOf(it.move) >= 0 ? it.move : '',
-          min: intIn(it.min, 0, 24 * 60),
+          min: intIn(it.min, 0, LIMITS.moveMin),
         };
       });
       return { items: items };
@@ -101,7 +106,7 @@
       }),
       budget: arr(o.budget, LIMITS.budget).map(function (x) {
         x = obj(x);
-        return { name: line(x.name, LIMITS.name), amount: intIn(x.amount, 0, 99999999), payer: intIn(x.payer, -1, LIMITS.members - 1) };
+        return { name: line(x.name, LIMITS.name), amount: intIn(x.amount, 0, LIMITS.amount), payer: intIn(x.payer, -1, LIMITS.members - 1) };
       }),
       notes: str(o.notes, LIMITS.notes),
       // 自由ページ（見出し＋本文）。古い保存データには無いので、そのときは空
@@ -269,7 +274,7 @@
    */
   function dayBand(items) {
     items = items || [];
-    var END = 24 * 60;
+    var END = DAY_MIN;
     var s = daySummary(items);
     var times = [];
     items.forEach(function (it, i) { var t = toMin(it.time); if (t !== null) times.push({ i: i, t: t }); });
@@ -283,7 +288,7 @@
       last = Math.max(last, Math.min(r.at, END));
     });
     var to = last;
-    if (to - from < 60) { to = Math.min(END, from + 60); from = Math.min(from, to - 60); }
+    if (to - from < BAND_MIN_SPAN) { to = Math.min(END, from + BAND_MIN_SPAN); from = Math.min(from, to - BAND_MIN_SPAN); }
     var span = to - from;
     var x = function (m) { return (Math.min(Math.max(m, from), to) - from) / span; };
     var ticks = [];
@@ -614,7 +619,7 @@
   var CREDIT = 'yorozu-craft.com/tabi-shiori/print/ で作成';
 
   var api = {
-    CREDIT: CREDIT, COVERS: COVERS, MOVES: MOVES, LIMITS: LIMITS, SHARE_MAX: SHARE_MAX, BACKUP_MAX_BYTES: BACKUP_MAX_BYTES,
+    CREDIT: CREDIT, COVERS: COVERS, MOVES: MOVES, LIMITS: LIMITS, DAY_MIN: DAY_MIN, BAND_MIN_SPAN: BAND_MIN_SPAN, SHARE_MAX: SHARE_MAX, BACKUP_MAX_BYTES: BACKUP_MAX_BYTES,
     emptyTrip: emptyTrip, normalizeTrip: normalizeTrip, normalizeStore: normalizeStore,
     isDate: isDate, isTime: isTime, tripDays: tripDays, nightsLabel: nightsLabel, dateJa: dateJa, dayDate: dayDate, rangeJa: rangeJa,
     formatMin: formatMin, daySummary: daySummary, dayBand: dayBand, bandLabelStep: bandLabelStep, tripMoveTotal: tripMoveTotal,

@@ -182,11 +182,11 @@
             '<label class="visually-hidden" for="' + id + 't">時刻</label>' +
             '<input type="time" id="' + id + 't" data-p="' + base + 'time" value="' + esc(it.time) + '">' +
             '<label class="visually-hidden" for="' + id + 'p">場所・予定</label>' +
-            '<input type="text" id="' + id + 'p" data-p="' + base + 'place" maxlength="60" value="' + esc(it.place) + '" placeholder="場所・予定（例：清水寺）">' +
+            '<input type="text" id="' + id + 'p" data-p="' + base + 'place" maxlength="' + C.LIMITS.place + '" value="' + esc(it.place) + '" placeholder="場所・予定（例：清水寺）">' +
             '<a class="map-link" id="map-' + id + '" href="' + esc(map || '#') + '" target="_blank" rel="noopener"' + (map ? '' : ' hidden') + '>地図</a>' +
           '</div>' +
           '<label class="visually-hidden" for="' + id + 'm">メモ</label>' +
-          '<textarea id="' + id + 'm" data-p="' + base + 'memo" rows="1" maxlength="300" placeholder="メモ（集合場所・予約番号など）">' + esc(it.memo) + '</textarea>' +
+          '<textarea id="' + id + 'm" data-p="' + base + 'memo" rows="1" maxlength="' + C.LIMITS.memo + '" placeholder="メモ（集合場所・予約番号など）">' + esc(it.memo) + '</textarea>' +
           '<div class="move-row">' +
             '<span class="move-label" aria-hidden="true">↓ 次へ</span>' +
             '<label class="visually-hidden" for="' + id + 'v">次の場所への移動手段</label>' +
@@ -194,7 +194,7 @@
               return '<option value="' + esc(m) + '"' + (it.move === m ? ' selected' : '') + '>' + (m ? esc(m) : '手段') + '</option>';
             }).join('') + '</select>' +
             '<label class="visually-hidden" for="' + id + 'n">移動時間（分）</label>' +
-            '<input type="number" id="' + id + 'n" class="num-min" data-p="' + base + 'min" data-type="int" min="0" max="1440" step="5" inputmode="numeric" value="' + (it.min || '') + '" placeholder="0">' +
+            '<input type="number" id="' + id + 'n" class="num-min" data-p="' + base + 'min" data-type="int" min="0" max="' + C.LIMITS.moveMin + '" step="5" inputmode="numeric" value="' + (it.min || '') + '" placeholder="0">' +
             '<span aria-hidden="true">分</span>' +
             '<span class="arrive" id="arr-' + id + '"></span>' +
           '</div>' +
@@ -303,7 +303,7 @@
       return '<li><label class="inline grow"><input type="checkbox" data-p="packing.' + i + '.done" data-type="bool"' + (x.done ? ' checked' : '') + '>' +
         '<span class="visually-hidden">用意した：</span></label>' +
         '<label class="visually-hidden" for="pk' + i + '">持ち物</label>' +
-        '<input type="text" id="pk' + i + '" data-p="packing.' + i + '.name" maxlength="40" value="' + esc(x.name) + '">' +
+        '<input type="text" id="pk' + i + '" data-p="packing.' + i + '.name" maxlength="' + C.LIMITS.name + '" value="' + esc(x.name) + '">' +
         '<button type="button" class="mini" data-act="pack-del" data-i="' + i + '" aria-label="' + esc(x.name) + ' を削除">×</button></li>';
     }).join('');
     updateSummaries();
@@ -314,13 +314,13 @@
     $('stays').innerHTML = t.stays.map(function (x, i) {
       var b = 'stays.' + i + '.';
       return '<div class="entry">' +
-        field('st' + i + 'n', '宿の名前', '<input type="text" id="st' + i + 'n" data-p="' + b + 'name" maxlength="60" value="' + esc(x.name) + '">') +
+        field('st' + i + 'n', '宿の名前', '<input type="text" id="st' + i + 'n" data-p="' + b + 'name" maxlength="' + C.LIMITS.place + '" value="' + esc(x.name) + '">') +
         '<div class="grid2">' +
-          field('st' + i + 'c', 'チェックイン', '<input type="text" id="st' + i + 'c" data-p="' + b + 'checkin" maxlength="40" value="' + esc(x.checkin) + '" placeholder="例：15:00〜">') +
-          field('st' + i + 't', '電話番号', '<input type="tel" id="st' + i + 't" data-p="' + b + 'tel" maxlength="30" value="' + esc(x.tel) + '">') +
+          field('st' + i + 'c', 'チェックイン', '<input type="text" id="st' + i + 'c" data-p="' + b + 'checkin" maxlength="' + C.LIMITS.name + '" value="' + esc(x.checkin) + '" placeholder="例：15:00〜">') +
+          field('st' + i + 't', '電話番号', '<input type="tel" id="st' + i + 't" data-p="' + b + 'tel" maxlength="' + C.LIMITS.tel + '" value="' + esc(x.tel) + '">') +
         '</div>' +
-        field('st' + i + 'a', '住所', '<input type="text" id="st' + i + 'a" data-p="' + b + 'addr" maxlength="120" value="' + esc(x.addr) + '">') +
-        field('st' + i + 'm', 'メモ', '<textarea id="st' + i + 'm" data-p="' + b + 'memo" rows="1" maxlength="300" placeholder="例：朝食 7:00〜、駐車場あり">' + esc(x.memo) + '</textarea>') +
+        field('st' + i + 'a', '住所', '<input type="text" id="st' + i + 'a" data-p="' + b + 'addr" maxlength="' + C.LIMITS.addr + '" value="' + esc(x.addr) + '">') +
+        field('st' + i + 'm', 'メモ', '<textarea id="st' + i + 'm" data-p="' + b + 'memo" rows="1" maxlength="' + C.LIMITS.memo + '" placeholder="例：朝食 7:00〜、駐車場あり">' + esc(x.memo) + '</textarea>') +
         '<button type="button" class="mini" data-act="stay-del" data-i="' + i + '">この宿を削除</button>' +
       '</div>';
     }).join('');
@@ -332,10 +332,10 @@
     $('contacts').innerHTML = t.contacts.map(function (x, i) {
       var b = 'contacts.' + i + '.';
       return '<div class="entry"><div class="grid2">' +
-        field('ct' + i + 'n', '名前', '<input type="text" id="ct' + i + 'n" data-p="' + b + 'name" maxlength="40" value="' + esc(x.name) + '">') +
-        field('ct' + i + 't', '電話番号', '<input type="tel" id="ct' + i + 't" data-p="' + b + 'tel" maxlength="30" value="' + esc(x.tel) + '">') +
+        field('ct' + i + 'n', '名前', '<input type="text" id="ct' + i + 'n" data-p="' + b + 'name" maxlength="' + C.LIMITS.name + '" value="' + esc(x.name) + '">') +
+        field('ct' + i + 't', '電話番号', '<input type="tel" id="ct' + i + 't" data-p="' + b + 'tel" maxlength="' + C.LIMITS.tel + '" value="' + esc(x.tel) + '">') +
         '</div>' +
-        field('ct' + i + 'm', 'メモ', '<input type="text" id="ct' + i + 'm" data-p="' + b + 'memo" maxlength="60" value="' + esc(x.memo) + '" placeholder="例：レンタカー会社、旅行保険">') +
+        field('ct' + i + 'm', 'メモ', '<input type="text" id="ct' + i + 'm" data-p="' + b + 'memo" maxlength="' + C.LIMITS.place + '" value="' + esc(x.memo) + '" placeholder="例：レンタカー会社、旅行保険">') +
         '<button type="button" class="mini" data-act="contact-del" data-i="' + i + '">この連絡先を削除</button>' +
       '</div>';
     }).join('');
@@ -382,7 +382,7 @@
     $('budget').innerHTML = t.budget.map(function (x, i) {
       var b = 'budget.' + i + '.';
       return '<div class="entry budget-row">' +
-        field('bg' + i + 'n', '費用', '<input type="text" id="bg' + i + 'n" data-p="' + b + 'name" maxlength="40" value="' + esc(x.name) + '" placeholder="例：新幹線、宿">') +
+        field('bg' + i + 'n', '費用', '<input type="text" id="bg' + i + 'n" data-p="' + b + 'name" maxlength="' + C.LIMITS.name + '" value="' + esc(x.name) + '" placeholder="例：新幹線、宿">') +
         field('bg' + i + 'a', '金額（円）', '<input type="number" id="bg' + i + 'a" data-p="' + b + 'amount" data-type="int" min="0" step="1" inputmode="numeric" value="' + (x.amount || '') + '">') +
         field('bg' + i + 'p', '立て替えた人', '<select id="bg' + i + 'p" data-p="' + b + 'payer" data-type="int">' + opts(x.payer) + '</select>') +
         '<button type="button" class="mini" data-act="budget-del" data-i="' + i + '" aria-label="この費用を削除">削除</button>' +
@@ -432,8 +432,8 @@
     var type = el.getAttribute('data-type');
     var v = el.type === 'checkbox' ? el.checked : el.value;
     if (type === 'int') v = v === '' ? (/payer$/.test(p) ? -1 : 0) : Math.round(Number(v)) || 0;
-    if (/\.min$/.test(p)) v = Math.min(1440, Math.max(0, v));
-    if (/\.amount$/.test(p)) v = Math.min(99999999, Math.max(0, v));
+    if (/\.min$/.test(p)) v = Math.min(C.LIMITS.moveMin, Math.max(0, v));
+    if (/\.amount$/.test(p)) v = Math.min(C.LIMITS.amount, Math.max(0, v));
     setPath(t, p, v);
     // 表示の一部を直す
     var m = /^days\.(\d+)\.items\.(\d+)\.(\w+)$/.exec(p);
@@ -588,7 +588,7 @@
     renderPacking(); save();
   });
   function addPack() {
-    var t = cur(), v = $('pack-new').value.trim().slice(0, 40);
+    var t = cur(), v = $('pack-new').value.trim().slice(0, C.LIMITS.name);
     if (!v || t.packing.length >= C.LIMITS.packing) return;
     t.packing.push({ name: v, done: false });
     $('pack-new').value = '';
