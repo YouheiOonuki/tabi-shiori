@@ -324,6 +324,40 @@
     lo = Math.min(lo, now); hi = Math.max(hi, now);
     return Math.min(hi, Math.max(lo, Math.round(Number(m) || 0)));
   }
+  /**
+   * ← → の 1 歩の行き先（Q-516）。dir は -1（←）か 1（→）。big なら BAND_MOVE.big の目、でなければ BAND_MOVE.step の目
+   * 目に在る時刻は 1 目進む。目に無い時刻は、進む向きの次の目へ（10:03 は → で 10:05、← で 10:00。big なら 10:30・10:00）
+   * 動ける範囲は bandMoveTo のまま
+   * @returns {number|null} 時刻の無い予定は null
+   */
+  function bandKeyTo(items, i, dir, big) {
+    var now = toMin(items && items[i] && items[i].time);
+    if (now === null) return null;
+    var g = big ? BAND_MOVE.big : BAND_MOVE.step;
+    return bandMoveTo(items, i, dir > 0 ? Math.floor(now / g) * g + g : Math.ceil(now / g) * g - g);
+  }
+  /**
+   * 引いた先（Q-516）。引き始めの時刻 t0 に dm 分（押した点から動いた分）を足し、BAND_MOVE.step の目に丸める
+   * 動ける範囲は bandMoveTo のまま（前後の予定の時刻が目に無ければ、その時刻で止まる）
+   * @returns {number|null}
+   */
+  function bandDragTo(items, i, t0, dm) {
+    var g = BAND_MOVE.step;
+    return bandMoveTo(items, i, Math.round((t0 + dm) / g) * g);
+  }
+  /**
+   * 重なった印から取る 1 つ（Q-516）。押した点 (x, y) に中心がいちばん近い印。同じ近さなら時刻の早い方（同じ時刻なら番号の小さい方）
+   * @param {Array<{i:number, t:number, x:number, y:number}>} marks 印の番号・時刻（分）・中心
+   * @returns {number|null} 取る印の i。marks が空なら null
+   */
+  function bandNearest(marks, x, y) {
+    var best = null, bd = Infinity;
+    (marks || []).forEach(function (m) {
+      var d = (m.x - x) * (m.x - x) + (m.y - y) * (m.y - y);
+      if (best === null || d < bd - 1e-6 || (Math.abs(d - bd) <= 1e-6 && (m.t < best.t || (m.t === best.t && m.i < best.i)))) { best = m; bd = d; }
+    });
+    return best ? best.i : null;
+  }
   /** 分（0〜1439）を時刻の欄の値「HH:MM」に */
   function hhmm(m) {
     return String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0');
@@ -647,7 +681,7 @@
     CREDIT: CREDIT, COVERS: COVERS, MOVES: MOVES, LIMITS: LIMITS, DAY_MIN: DAY_MIN, BAND_MIN_SPAN: BAND_MIN_SPAN, BAND_MOVE: BAND_MOVE, SHARE_MAX: SHARE_MAX, BACKUP_MAX_BYTES: BACKUP_MAX_BYTES,
     emptyTrip: emptyTrip, normalizeTrip: normalizeTrip, normalizeStore: normalizeStore,
     isDate: isDate, isTime: isTime, tripDays: tripDays, nightsLabel: nightsLabel, dateJa: dateJa, dayDate: dayDate, rangeJa: rangeJa,
-    toMin: toMin, formatMin: formatMin, daySummary: daySummary, dayBand: dayBand, bandMoveTo: bandMoveTo, hhmm: hhmm, bandLabelStep: bandLabelStep, tripMoveTotal: tripMoveTotal,
+    toMin: toMin, formatMin: formatMin, daySummary: daySummary, dayBand: dayBand, bandMoveTo: bandMoveTo, bandKeyTo: bandKeyTo, bandDragTo: bandDragTo, bandNearest: bandNearest, hhmm: hhmm, bandLabelStep: bandLabelStep, tripMoveTotal: tripMoveTotal,
     splitEven: splitEven, settle: settle, toEasySplit: toEasySplit, easySplitUrl: easySplitUrl,
     encodeShare: encodeShare, decodeShare: decodeShare, packTrip: packTrip, unpackTrip: unpackTrip,
     FREE_PLACES: FREE_PLACES, freeOrder: freeOrder, wrapText: wrapText,
