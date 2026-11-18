@@ -150,6 +150,9 @@ label.inline input { width: 1.1rem; height: 1.1rem; flex: none; accent-color: va
 /* 使い方へのリンクだけの行（Q-553。箱を名指しする） */
 p.link-row > a:only-child { display: inline-flex; align-items: center; min-height: var(--tap); }
 .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 var(--sp-3); }
+/* 表紙の出発日・帰着日。日付の欄は字の幅より縮まないので、2 つ並ばない幅では 2 段に折る（QUEUE Q-584: 320 幅で 65 px はみ出していた。並ぶ幅では 2 列で幅も同じ） */
+.grid2.dates { display: flex; flex-wrap: wrap; column-gap: var(--sp-3); }
+.grid2.dates > .field { flex: 1 1 0; }
 .inline-row { display: flex; gap: var(--sp-2); align-items: center; }
 .inline-row > input, .inline-row > select { flex: 1; }
 .btn-row { display: flex; flex-wrap: wrap; gap: var(--sp-2); margin: var(--sp-3) 0; }
