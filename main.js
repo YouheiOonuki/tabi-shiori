@@ -318,6 +318,18 @@
   var bandDrag = null;      // { id, di, i, x0, t0, per, moved, box }
   var bandNoClick = false;  // 引いた後の click では飛ばない
   function bandOf(el) { return el && el.closest ? el.closest('.band-mark') : null; }
+  // 押した点 (x, y) で取る印（Q-516）。押せる所（.band-hit）がその点を含む印のうち、中心がいちばん近いもの（決め方は Calc.bandNearest）
+  // 描く順（上に描かれた印）では決めない。引く時も、押して飛ぶ時も、これで決める
+  function bandPick(mk, x, y) {
+    var svg = mk.closest('.band-svg'), di = Number(mk.getAttribute('data-d')), items = cur().days[di].items, cand = [];
+    Array.prototype.forEach.call(svg.querySelectorAll('.band-mark'), function (a) {
+      var r = a.querySelector('.band-hit').getBoundingClientRect(), i = Number(a.getAttribute('data-i'));
+      if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) cand.push({ i: i, t: C.toMin(items[i].time), x: r.left + r.width / 2, y: r.top + r.height / 2, el: a });
+    });
+    var k = C.bandNearest(cand, x, y);
+    for (var n = 0; n < cand.length; n++) if (cand[n].i === k) return cand[n].el;
+    return mk;
+  }
   // 目盛りの字の間が 24px 未満になるときは、2・3・4・6 時間おきに字を出す（その時刻が割り切れる字だけ。何時間おきかは Calc.bandLabelStep）
   function thinBand(box) {
     var svg = box.querySelector('.band-svg');
@@ -574,6 +586,7 @@
       case 'band-go':
         e.preventDefault();
         if (bandNoClick) { bandNoClick = false; return; }
+        if (e.detail > 0) ii = Number(bandPick(b, e.clientX, e.clientY).getAttribute('data-i'));   // 押した時は近い方の印（Enter は止まっている印）
         var go = $('d' + di + 'i' + ii + 'p');
         if (go) { go.scrollIntoView({ block: 'center' }); go.focus({ preventScroll: true }); }
         return;
@@ -600,24 +613,26 @@
     save();
   });
 
-  // 帯の印: ← → で BAND_MOVE.step 分、Shift と ← → で BAND_MOVE.big 分。Enter は今までどおりリンク（band-go）
+  // 帯の印: ← → で BAND_MOVE.step の目、Shift と ← → で BAND_MOVE.big の目へ（目に無い時刻は最初の 1 歩で目に揃える。Calc.bandKeyTo）。Enter は今までどおりリンク（band-go）
   main.addEventListener('keydown', function (e) {
     var mk = bandOf(e.target);
     if (!mk || (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') || e.altKey || e.ctrlKey || e.metaKey) return;
     e.preventDefault();
     var di = Number(mk.getAttribute('data-d')), i = Number(mk.getAttribute('data-i'));
-    var now = C.toMin(cur().days[di].items[i].time);
-    if (now === null) return;
-    bandSet(di, i, now + (e.key === 'ArrowLeft' ? -1 : 1) * (e.shiftKey ? C.BAND_MOVE.big : C.BAND_MOVE.step));
+    var to = C.bandKeyTo(cur().days[di].items, i, e.key === 'ArrowLeft' ? -1 : 1, e.shiftKey);
+    if (to === null) return;
+    bandSet(di, i, to);
   });
   main.addEventListener('focusout', function (e) {
     if (bandRedraw || !bandOf(e.target)) return;
     setTimeout(function () { if (!bandDrag) bandRelease(); }, 0);
   });
   // 引く: BAND_MOVE.tap px 以上動いたら引いたことにして、帯の箱で指を捕まえる（それまでは押しただけ。離すと click で飛ぶ）
+  // 引く印は、押した点に中心がいちばん近い印（bandPick）。時刻は BAND_MOVE.step の目に丸める（Calc.bandDragTo）
   main.addEventListener('pointerdown', function (e) {
     var mk = bandOf(e.target);
     if (!mk || !e.isPrimary || e.button !== 0) return;
+    mk = bandPick(mk, e.clientX, e.clientY);
     bandNoClick = false;
     var di = Number(mk.getAttribute('data-d')), i = Number(mk.getAttribute('data-i'));
     var items = cur().days[di].items;
@@ -635,8 +650,8 @@
       d.moved = true;
       try { d.box.setPointerCapture(d.id); } catch (err) { /* 捕まえられなくても動かせる */ }
     }
-    var st = C.BAND_MOVE.step;
-    bandSet(d.di, d.i, d.t0 + Math.round(dx * d.per / st) * st);
+    var to = C.bandDragTo(cur().days[d.di].items, d.i, d.t0, dx * d.per);
+    if (to !== null) bandSet(d.di, d.i, to);
   });
   function bandDragEnd(e) {
     var d = bandDrag;

@@ -113,11 +113,12 @@ test('BAND_MOVE は 5 分・30 分・8 px（QUEUE Q-510 の数。芯はここ 1 
   assert.equal(C.BAND_MOVE.big % C.BAND_MOVE.step, 0);
 });
 
-test('main.js は刻みを Calc.BAND_MOVE から取る（5・30・8 を直書きしない）', () => {
+test('main.js は刻みを Calc から取る（5・30・8 を直書きしない。目に揃える式は calc.js の bandKeyTo・bandDragTo。Q-516）', () => {
   const src = require('node:fs').readFileSync(require('node:path').join(__dirname, '..', 'main.js'), 'utf8');
-  assert.match(src, /C\.BAND_MOVE\.step/);
-  assert.match(src, /C\.BAND_MOVE\.big/);
+  assert.match(src, /C\.bandKeyTo\(/);
+  assert.match(src, /C\.bandDragTo\(/);
   assert.match(src, /C\.BAND_MOVE\.tap/);
+  assert.doesNotMatch(src, /Math\.(round|floor|ceil)\([^)]*BAND_MOVE/);   // 揃える式を main.js に書かない
   const body = src.slice(src.indexOf('function bandSet'), src.indexOf("$('day-add')"));
   assert.doesNotMatch(body.replace(/\/\/[^\n]*/g, ''), /[^\w.](5|30|8)\b(?!\s*px)/);
 });
@@ -170,4 +171,93 @@ test('dayBand に範囲を渡すと、その範囲で描く（動かしている
   assert.deepEqual(b1.ticks, b0.ticks);
   near(b1.marks[0].x, 30 / 120);
   assert.notEqual(C.dayBand(items).from, b0.from);   // 渡さなければ取り直す
+});
+
+// ---- 5 分の目に揃える・重なった印は近い方（Q-516） ----
+
+const T = (t) => C.toMin(t);
+const key = (items, i, dir, big) => C.hhmm(C.bandKeyTo(items, i, dir, big));
+
+test('bandKeyTo: 目に無い時刻は最初の 1 歩で進む向きの目へ（10:03 は → で 10:05、← で 10:00、Shift は 10:30・10:00）', () => {
+  const items = [{ time: '08:00' }, { time: '10:03' }, { time: '12:00' }];
+  assert.equal(key(items, 1, 1, false), '10:05');
+  assert.equal(key(items, 1, -1, false), '10:00');
+  assert.equal(key(items, 1, 1, true), '10:30');
+  assert.equal(key(items, 1, -1, true), '10:00');
+});
+
+test('bandKeyTo: 目に在る時刻は今までどおり 1 目（10:05 は → で 10:10、← で 10:00。Shift は 30 分の目）', () => {
+  const items = [{ time: '08:00' }, { time: '10:05' }, { time: '12:00' }];
+  assert.equal(key(items, 1, 1, false), '10:10');
+  assert.equal(key(items, 1, -1, false), '10:00');
+  assert.equal(key(items, 1, 1, true), '10:30');
+  assert.equal(key(items, 1, -1, true), '10:00');
+  items[1].time = '10:30';
+  assert.equal(key(items, 1, 1, true), '11:00');
+  assert.equal(key(items, 1, -1, true), '10:00');
+});
+
+test('bandKeyTo: 23:58 の → は 23:55 の先（24:00）へ行かない', () => {
+  const items = [{ time: '23:00' }, { time: '23:58' }];
+  const v = C.bandKeyTo(items, 1, 1, false);
+  assert.ok(v < C.DAY_MIN, 'v=' + v);
+  assert.equal(C.hhmm(v), '23:58');   // 23:55 より後に入っている時刻は、今の時刻より外へは動かさない（bandMoveTo のまま）
+  assert.equal(key(items, 1, -1, false), '23:55');
+  assert.equal(key([{ time: '23:00' }, { time: '23:53' }], 1, 1, false), '23:55');
+  assert.equal(key([{ time: '23:00' }, { time: '23:55' }], 1, 1, false), '23:55');
+});
+
+test('bandKeyTo: 前の予定が 10:04 に在る 10:06 の ← は 10:05 で止まり、次の ← も 10:04 より前へ行かない', () => {
+  const items = [{ time: '10:04' }, { time: '10:06' }, { time: '11:00' }];
+  assert.equal(key(items, 1, -1, false), '10:05');
+  items[1].time = '10:05';
+  assert.equal(key(items, 1, -1, false), '10:04');
+  items[1].time = '10:06';
+  assert.equal(key(items, 1, -1, true), '10:04');
+  assert.equal(C.bandKeyTo([{ time: '' }, { time: '10:00' }], 0, 1, false), null);
+});
+
+test('bandDragTo: 引いた後の時刻は 5 で割り切れる（引き始めが目に無くても。前後の予定が目に在る時）', () => {
+  for (const start of ['10:03', '10:07', '10:00', '10:58']) {
+    const items = [{ time: '08:00' }, { time: start }, { time: '13:00' }];
+    for (let dm = -90; dm <= 90; dm += 0.7) {
+      const v = C.bandDragTo(items, 1, T(start), dm);
+      assert.equal(v % C.BAND_MOVE.step, 0, start + ' ' + dm + ' → ' + v);
+      assert.ok(Math.abs(v - (T(start) + dm)) <= C.BAND_MOVE.step / 2 + 1e-9);
+    }
+  }
+});
+
+test('bandKeyTo・bandDragTo: 目に揃えても並びの順は変わらない（前後の時刻が目に無い入力を総当たり）', () => {
+  let n = 0;
+  for (let a = 600; a <= 615; a++) for (let c = 616; c <= 640; c++) for (let b = a; b <= c; b++) {
+    const items = [{ time: C.hhmm(a) }, { time: C.hhmm(b) }, { time: C.hhmm(c) }];
+    const vs = [C.bandKeyTo(items, 1, 1, false), C.bandKeyTo(items, 1, -1, false), C.bandKeyTo(items, 1, 1, true), C.bandKeyTo(items, 1, -1, true)];
+    for (let dm = -40; dm <= 40; dm += 3) vs.push(C.bandDragTo(items, 1, b, dm));
+    for (const v of vs) { assert.ok(v >= a && v <= c, [a, b, c, v].join(' ')); n++; }
+  }
+  assert.ok(n > 10000);
+});
+
+test('bandNearest: 重なった 2 つの印は、押した点に中心が近い方（3 組）', () => {
+  const pairs = [[100, 112], [50, 80], [200, 201]];   // 中心の x（y は同じ 66）
+  pairs.forEach(([xl, xr], k) => {
+    const marks = [{ i: k, t: 600, x: xl, y: 66 }, { i: k + 1, t: 610, x: xr, y: 66 }];
+    assert.equal(C.bandNearest(marks, xr - (xr - xl) * 0.25, 70), k + 1);   // 右の中心に近い点 → 右
+    assert.equal(C.bandNearest(marks, xl + (xr - xl) * 0.25, 60), k);       // 左の中心に近い点 → 左
+    assert.equal(C.bandNearest(marks.slice().reverse(), xr - (xr - xl) * 0.25, 66), k + 1);   // 描く順に依らない
+  });
+});
+
+test('bandNearest: 同じ近さなら時刻の早い方（同じ時刻なら番号の小さい方）。空なら null', () => {
+  assert.equal(C.bandNearest([{ i: 3, t: 610, x: 10, y: 0 }, { i: 2, t: 600, x: 30, y: 0 }], 20, 0), 2);
+  assert.equal(C.bandNearest([{ i: 5, t: 600, x: 10, y: 0 }, { i: 4, t: 600, x: 10, y: 0 }], 10, 0), 4);
+  assert.equal(C.bandNearest([], 0, 0), null);
+});
+
+test('main.js の押す・引くは bandPick（Calc.bandNearest）で印を決める（描く順で決めない。Q-516）', () => {
+  const src = require('node:fs').readFileSync(require('node:path').join(__dirname, '..', 'main.js'), 'utf8');
+  assert.match(src, /function bandPick\(mk, x, y\)[\s\S]*?C\.bandNearest\(/);
+  assert.match(src, /mk = bandPick\(mk, e\.clientX, e\.clientY\)/);   // 引く
+  assert.match(src, /case 'band-go':[\s\S]*?bandPick\(b, e\.clientX, e\.clientY\)/);   // 押して飛ぶ
 });
