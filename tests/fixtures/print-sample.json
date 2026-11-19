@@ -1,0 +1,51 @@
+{
+  "v": 1,
+  "active": "sample1",
+  "trips": [
+    {
+      "id": "sample1",
+      "title": "秋の箱根 2泊3日",
+      "sub": "家族 4 人で温泉と美術館",
+      "start": "2026-11-21",
+      "end": "2026-11-23",
+      "members": ["父", "母", "はな", "そら"],
+      "cover": "mountain",
+      "image": "",
+      "days": [
+        { "items": [
+          { "time": "08:30", "place": "自宅", "memo": "", "move": "車", "min": 120 },
+          { "time": "11:00", "place": "箱根湯本駅", "memo": "駅前でお昼", "move": "", "min": 0 },
+          { "time": "15:00", "place": "旅館 山のゆ", "memo": "チェックイン", "move": "", "min": 0 }
+        ] },
+        { "items": [
+          { "time": "09:30", "place": "彫刻の森美術館", "memo": "子どもは足湯", "move": "電車", "min": 30 },
+          { "time": "13:00", "place": "大涌谷", "memo": "黒たまご", "move": "バス", "min": 40 },
+          { "time": "16:00", "place": "旅館 山のゆ", "memo": "", "move": "", "min": 0 }
+        ] },
+        { "items": [
+          { "time": "10:00", "place": "芦ノ湖 遊覧船", "memo": "", "move": "徒歩", "min": 15 },
+          { "time": "18:00", "place": "自宅", "memo": "", "move": "車", "min": 150 }
+        ] }
+      ],
+      "packing": [
+        { "name": "着替え", "done": false },
+        { "name": "タオル", "done": true },
+        { "name": "常備薬", "done": false },
+        { "name": "カメラ", "done": false }
+      ],
+      "stays": [
+        { "name": "旅館 山のゆ", "addr": "神奈川県足柄下郡箱根町 1-2-3", "tel": "0460-00-0000", "checkin": "15:00", "memo": "夕食 18:30" }
+      ],
+      "contacts": [
+        { "name": "おばあちゃん", "tel": "090-0000-0000", "memo": "留守番" }
+      ],
+      "budget": [
+        { "name": "宿代", "amount": 60000, "payer": 0 },
+        { "name": "ガソリン", "amount": 5000, "payer": 1 }
+      ],
+      "notes": "雨なら美術館を先に。",
+      "freePages": [],
+      "print": { "credit": true, "packing": true, "stays": true, "contacts": true, "budget": true, "notes": true, "free": true }
+    }
+  ]
+}
