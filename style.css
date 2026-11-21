@@ -254,7 +254,7 @@ details.rels[open] > summary { margin-bottom: var(--sp-2); }
 .opt-state { color: var(--text); font-weight: 400; }
 #print { min-width: 10rem; }
 
-/* 上端の固定バー（SCREEN.md 1.2・D59）: 印刷ボタンが画面の外にあるときだけ。下端は AdSense のアンカー広告が使う。中身の高さ 44px は screen.js の BAR_H と同じ（線の 1px は外） */
+/* 上端の固定バー（SCREEN.md 1.2・D59）: 印刷ボタンが画面の外にあるときだけ。下端は AdSense のアンカー広告が使う。中身の高さ 44px（線の 1px は外） */
 .fixbar {
   position: fixed; top: 0; left: 0; right: 0; z-index: 50; box-sizing: content-box; height: 44px;
   display: flex; align-items: center; justify-content: center; gap: var(--sp-3); padding: 0 var(--sp-4);
