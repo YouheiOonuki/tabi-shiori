@@ -589,7 +589,7 @@
         items.splice(ii, 1); renderDays();
         break;
       case 'day-del':
-        if (t.days[di].items.length && !confirm((di + 1) + '日目の予定（' + t.days[di].items.length + ' 件）を削除しますか？')) return;
+        if (t.days[di].items.length && !confirm((di + 1) + '日目の予定（' + t.days[di].items.length + ' 件）を削除しますか？ 元に戻せません。')) return;
         t.days.splice(di, 1); renderDays(); renderNights();
         break;
       case 'band-go':
