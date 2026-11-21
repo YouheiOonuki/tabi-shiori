@@ -55,6 +55,9 @@
   // 並びは共有リンクのビットの順。足すときは末尾に足す（古いリンクのビットがずれないように）
   var PRINT_KEYS = ['credit', 'packing', 'stays', 'contacts', 'budget', 'notes', 'free'];
 
+  /** しおりが上限の件数に届いているか。届いていれば「新しく作る」「複製する」「保存して編集する」は足さずに、画面の中に知らせを出す（D578） */
+  function tripsFull(n) { return n >= LIMITS.trips; }
+
   function emptyTrip() {
     return {
       id: newId(), title: '', sub: '', start: '', end: '', members: [], cover: 'mountain', image: '',
@@ -679,7 +682,7 @@
 
   var api = {
     CREDIT: CREDIT, COVERS: COVERS, MOVES: MOVES, LIMITS: LIMITS, DAY_MIN: DAY_MIN, BAND_MIN_SPAN: BAND_MIN_SPAN, BAND_MOVE: BAND_MOVE, SHARE_MAX: SHARE_MAX, BACKUP_MAX_BYTES: BACKUP_MAX_BYTES,
-    emptyTrip: emptyTrip, normalizeTrip: normalizeTrip, normalizeStore: normalizeStore,
+    tripsFull: tripsFull, emptyTrip: emptyTrip, normalizeTrip: normalizeTrip, normalizeStore: normalizeStore,
     isDate: isDate, isTime: isTime, tripDays: tripDays, nightsLabel: nightsLabel, dateJa: dateJa, dayDate: dayDate, rangeJa: rangeJa,
     toMin: toMin, formatMin: formatMin, daySummary: daySummary, dayBand: dayBand, bandMoveTo: bandMoveTo, bandKeyTo: bandKeyTo, bandDragTo: bandDragTo, bandNearest: bandNearest, hhmm: hhmm, bandLabelStep: bandLabelStep, tripMoveTotal: tripMoveTotal,
     splitEven: splitEven, settle: settle, toEasySplit: toEasySplit, easySplitUrl: easySplitUrl,

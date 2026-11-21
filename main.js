@@ -134,6 +134,14 @@
       return '<option value="' + esc(t.id) + '"' + (t.id === data.active ? ' selected' : '') + '>' + esc(tripLabel(t)) + '</option>';
     }).join('');
     $('trip-del').disabled = false;
+    if (!C.tripsFull(data.trips.length)) { limitMsg('trip-limit', ''); limitMsg('shared-limit', ''); }   // 削除して上限を外れたら消す
+  }
+  // 上限の知らせ（D578）: 押したボタンの行のすぐ後の p.field-error に出す。text が空なら空にして hidden。返り値は出したか
+  function limitMsg(id, text) {
+    var p = $(id);
+    p.textContent = text || '';
+    p.hidden = !text;
+    return !!text;
   }
 
   function renderCoverPick() {
@@ -728,13 +736,13 @@
 
   // しおりの切り替え・新規・複製・削除
   $('trip-new').addEventListener('click', function () {
-    if (data.trips.length >= C.LIMITS.trips) { alert('しおりは ' + C.LIMITS.trips + ' 件までです。使わないしおりを削除してください。'); return; }
+    if (limitMsg('trip-limit', C.tripsFull(data.trips.length) ? 'しおりは ' + C.LIMITS.trips + ' 件までです。使わないしおりを削除してください。' : '')) return;
     var t = C.emptyTrip();
     data.trips.push(t); data.active = t.id;
     save(true); renderAll(); focusLater('f-title');
   });
   $('trip-dup').addEventListener('click', function () {
-    if (data.trips.length >= C.LIMITS.trips) { alert('しおりは ' + C.LIMITS.trips + ' 件までです。'); return; }
+    if (limitMsg('trip-limit', C.tripsFull(data.trips.length) ? 'しおりは ' + C.LIMITS.trips + ' 件までです。' : '')) return;
     var t = C.normalizeTrip(JSON.parse(JSON.stringify(cur())));
     t.id = C.emptyTrip().id;
     t.title = (t.title + '（コピー）').slice(0, C.LIMITS.title);
@@ -1037,7 +1045,7 @@
   // 共有リンクで開いたしおりを、自分の端末に保存する
   $('shared-save').addEventListener('click', function () {
     if (!shared) return;
-    if (data.trips.length >= C.LIMITS.trips) { alert('しおりは ' + C.LIMITS.trips + ' 件までです。使わないしおりを削除してから保存してください。'); return; }
+    if (limitMsg('shared-limit', C.tripsFull(data.trips.length) ? 'しおりは ' + C.LIMITS.trips + ' 件までです。使わないしおりを削除してから保存してください。' : '')) return;
     shared.id = C.emptyTrip().id;
     // 最初の空のしおりしか無ければ、置き換える
     if (data.trips.length === 1 && isBlank(data.trips[0])) data.trips = [];
