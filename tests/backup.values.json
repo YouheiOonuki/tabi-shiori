@@ -1,0 +1,19 @@
+{
+  "module": "calc.js",
+  "tool": "tabi-shiori",
+  "data": {
+    "trips": {
+      "v": 1,
+      "active": "abc",
+      "trips": [
+        {
+          "id": "abc",
+          "title": "京都"
+        }
+      ]
+    }
+  },
+  "required": [
+    "trips"
+  ]
+}
